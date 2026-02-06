@@ -1,0 +1,28 @@
+seed: 42
+deterministic: false
+
+data:
+  batch_size: 32
+  num_workers: 0
+  pin_memory: false
+  val_split: 0.2
+  download: true
+
+train:
+  epochs: 5
+  lr: 0.0003
+  weight_decay: 0.01
+  freeze_backbone: false
+  freeze_epochs: 0
+  scheduler:
+    name: none  # none | step | cosine
+    step_size: 5
+    gamma: 0.1
+    t_max: 10
+
+logging:
+  print_every: 50
+
+paths:
+  data_dir: ./data
+  checkpoints_dir: ./checkpoints
