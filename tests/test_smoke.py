@@ -1,6 +1,6 @@
-from config import load_config
-from model import build_model
-from data import build_datasets
+from src.config import load_config
+from src.data import build_datasets
+from src.model import build_model
 
 
 def test_smoke_imports_and_builds():

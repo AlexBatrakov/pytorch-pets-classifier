@@ -10,6 +10,18 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
+Install development dependencies (tests):
+
+```bash
+pip install -r requirements-dev.txt
+```
+
+## Testing
+
+```bash
+python -m pytest -q
+```
+
 ## Train
 
 ```bash
