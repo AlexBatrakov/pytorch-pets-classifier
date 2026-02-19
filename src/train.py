@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import os
 from typing import Dict, Tuple
 
@@ -14,6 +15,51 @@ from .config import apply_overrides, load_config
 from .data import build_loaders
 from .model import build_model
 from .utils import AverageMeter, accuracy_topk, get_device, set_seed
+
+
+def _init_metrics_csv(path: str) -> None:
+	os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+	with open(path, "w", newline="", encoding="utf-8") as f:
+		writer = csv.writer(f)
+		writer.writerow(
+			[
+				"epoch",
+				"train_loss",
+				"train_acc1",
+				"train_acc5",
+				"val_loss",
+				"val_acc1",
+				"val_acc5",
+				"lr",
+			]
+		)
+
+
+def _append_metrics_csv(
+	path: str,
+	epoch: int,
+	train_loss: float,
+	train_acc1: float,
+	train_acc5: float,
+	val_loss: float,
+	val_acc1: float,
+	val_acc5: float,
+	lr: float,
+) -> None:
+	with open(path, "a", newline="", encoding="utf-8") as f:
+		writer = csv.writer(f)
+		writer.writerow(
+			[
+				epoch,
+				f"{train_loss:.6f}",
+				f"{train_acc1:.6f}",
+				f"{train_acc5:.6f}",
+				f"{val_loss:.6f}",
+				f"{val_acc1:.6f}",
+				f"{val_acc5:.6f}",
+				f"{lr:.8f}",
+			]
+		)
 
 
 def _set_backbone_trainable(model: nn.Module, trainable: bool) -> None:
@@ -147,7 +193,9 @@ def main() -> None:
 	best_val_acc = 0.0
 	best_path = os.path.join(cfg["paths"]["checkpoints_dir"], "best.pt")
 	last_path = os.path.join(cfg["paths"]["checkpoints_dir"], "last.pt")
+	metrics_path = os.path.join(cfg["paths"].get("artifacts_dir", "./artifacts"), "metrics.csv")
 	os.makedirs(cfg["paths"]["checkpoints_dir"], exist_ok=True)
+	_init_metrics_csv(metrics_path)
 
 	epochs = int(train_cfg.get("epochs", 1))
 	for epoch in range(epochs):
@@ -164,6 +212,19 @@ def main() -> None:
 
 		if scheduler is not None:
 			scheduler.step()
+
+		current_lr = optimizer.param_groups[0]["lr"]
+		_append_metrics_csv(
+			path=metrics_path,
+			epoch=epoch + 1,
+			train_loss=train_loss,
+			train_acc1=train_acc1,
+			train_acc5=train_acc5,
+			val_loss=val_loss,
+			val_acc1=val_acc1,
+			val_acc5=val_acc5,
+			lr=current_lr,
+		)
 
 		is_best = val_acc1 > best_val_acc
 		if is_best:
@@ -198,6 +259,7 @@ def main() -> None:
 
 	print(f"Best checkpoint saved to: {best_path}")
 	print(f"Best val acc: {best_val_acc:.4f}")
+	print(f"Epoch metrics saved to: {metrics_path}")
 
 
 if __name__ == "__main__":

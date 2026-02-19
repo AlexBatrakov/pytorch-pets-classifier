@@ -26,3 +26,4 @@ logging:
 paths:
   data_dir: ./data
   checkpoints_dir: ./checkpoints
+  artifacts_dir: ./artifacts

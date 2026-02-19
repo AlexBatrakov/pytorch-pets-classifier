@@ -35,6 +35,15 @@ python -m src.train --epochs 10 --batch-size 64 --lr 3e-4 --freeze-epochs 2 --nu
 ```
 
 Best checkpoint is saved to `./checkpoints/best.pt`.
+Per-epoch metrics are saved to `./artifacts/metrics.csv`.
+
+Example `metrics.csv`:
+
+```csv
+epoch,train_loss,train_acc1,train_acc5,val_loss,val_acc1,val_acc5,lr
+1,1.665000,0.566000,0.839000,0.930600,0.720000,0.965000,0.00030000
+2,0.890800,0.749000,0.945000,0.516700,0.827000,0.990000,0.00030000
+```
 
 ## Evaluate
 
