@@ -30,26 +30,27 @@ def _val_transform() -> transforms.Compose:
 	)
 
 
+def _resolve_target_type(data_dir: str, download: bool) -> str:
+	try:
+		_ = OxfordIIITPet(
+			root=data_dir,
+			split="trainval",
+			target_types="breed",
+			download=download,
+			transform=None,
+		)
+		return "breed"
+	except ValueError:
+		return "category"
+
+
 def build_datasets(config) -> Tuple[Subset, Subset, List[str]]:
 	data_cfg = config["data"]
 	seed = config.get("seed", 42)
 	data_dir = config["paths"]["data_dir"]
 	download = data_cfg.get("download", True)
 
-	def _resolve_target_type() -> str:
-		try:
-			_ = OxfordIIITPet(
-				root=data_dir,
-				split="trainval",
-				target_types="breed",
-				download=download,
-				transform=None,
-			)
-			return "breed"
-		except ValueError:
-			return "category"
-
-	target_type = _resolve_target_type()
+	target_type = _resolve_target_type(data_dir, download)
 
 	base_ds = OxfordIIITPet(
 		root=data_dir,
@@ -110,3 +111,37 @@ def build_loaders(config):
 	)
 
 	return train_loader, val_loader, class_names
+
+
+def build_test_loader(config):
+	data_cfg = config["data"]
+	data_dir = config["paths"]["data_dir"]
+	download = data_cfg.get("download", True)
+
+	target_type = _resolve_target_type(data_dir, download)
+	base_ds = OxfordIIITPet(
+		root=data_dir,
+		split="trainval",
+		target_types=target_type,
+		download=download,
+		transform=None,
+	)
+	class_names = list(base_ds.classes)
+
+	test_ds = OxfordIIITPet(
+		root=data_dir,
+		split="test",
+		target_types=target_type,
+		download=False,
+		transform=_val_transform(),
+	)
+
+	test_loader = DataLoader(
+		test_ds,
+		batch_size=data_cfg.get("batch_size", 32),
+		shuffle=False,
+		num_workers=data_cfg.get("num_workers", 0),
+		pin_memory=data_cfg.get("pin_memory", False),
+	)
+
+	return test_loader, class_names

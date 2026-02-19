@@ -13,13 +13,13 @@ pip install -r requirements.txt
 ## Train
 
 ```bash
-python src/train.py --config configs/default.yaml
+python -m src.train --config configs/default.yaml
 ```
 
 Common overrides:
 
 ```bash
-python src/train.py --epochs 10 --batch-size 64 --lr 3e-4 --freeze-epochs 2 --num-workers 0
+python -m src.train --epochs 10 --batch-size 64 --lr 3e-4 --freeze-epochs 2 --num-workers 0
 ```
 
 Best checkpoint is saved to `./checkpoints/best.pt`.
@@ -27,13 +27,34 @@ Best checkpoint is saved to `./checkpoints/best.pt`.
 ## Evaluate
 
 ```bash
-python src/eval.py --ckpt checkpoints/best.pt
+python -m src.eval --ckpt checkpoints/best.pt --split val
 ```
+
+Evaluate on the official test split:
+
+```bash
+python -m src.eval --ckpt checkpoints/best.pt --split test
+```
+
+Save a confusion matrix image:
+
+```bash
+python -m src.eval --ckpt checkpoints/best.pt --split test --cm-out assets/confusion_matrix.png --cm-normalize
+```
+
+## Results
+
+| Split | acc@1 | acc@5 |
+| --- | --- | --- |
+| Val | 0.832 | 0.988 |
+| Test | 0.805 | 0.980 |
+
+![Confusion matrix](assets/confusion_matrix.png)
 
 ## Predict
 
 ```bash
-python src/predict.py --ckpt checkpoints/best.pt --image path/to/image.jpg
+python -m src.predict --ckpt checkpoints/best.pt --image path/to/image.jpg
 ```
 
 Example output:
