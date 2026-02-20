@@ -72,13 +72,39 @@ python -m src.eval --ckpt checkpoints/best.pt --split test --cm-out assets/confu
 
 ## Results
 
-| Split | acc@1 | acc@5 |
-| --- | --- | --- |
-| Val | 0.832 | 0.988 |
-| Test | 0.805 | 0.980 |
+### Baseline experiment
+
+Training command used for the baseline below:
+
+```bash
+python -m src.train --config configs/default.yaml --epochs 15
+```
+
+| Parameter | Value |
+| --- | --- |
+| Model | ResNet18 (ImageNet pretrained) |
+| Dataset | Oxford-IIIT Pets (37 classes) |
+| Epochs | 15 (best checkpoint at epoch 7 by val acc@1) |
+| Batch size | 32 |
+| Optimizer | AdamW |
+| Learning rate | 3e-4 |
+| Scheduler | none |
+
+### Final metrics (best checkpoint)
+
+| Split | loss | acc@1 | acc@5 |
+| --- | --- | --- | --- |
+| Val | 0.4513 | 0.863 | 0.986 |
+| Test | 0.5881 | 0.817 | 0.974 |
 
 ![Confusion matrix](assets/confusion_matrix.png)
 ![Training curves](assets/training_curves.png)
+
+### Observations
+
+- Validation top-1 peaks at epoch 7, then does not improve meaningfully.
+- Around epochs 10-12+, val loss trends worse while train accuracy keeps increasing, indicating overfitting.
+- Top-5 stays high, so most errors are near-misses between visually similar breeds.
 
 ## Predict
 
