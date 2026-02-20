@@ -221,6 +221,7 @@ data/
 artifacts/
 runs/
 assets/training_curves_*.png
+!assets/training_curves_showcase.png
 checkpoints/
 *.pt
 *.pth

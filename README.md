@@ -147,8 +147,8 @@ Training command:
 | test_loss | 0.5881 | 0.4570 | -0.1311 |
 | test_acc5 | 0.9740 | 0.9840 | +1.00 pp |
 
-![Confusion matrix](assets/confusion_matrix.png)
-![Training curves](assets/training_curves.png)
+![Training curves](assets/training_curves_showcase.png)
+![Confusion matrix](assets/confusion_matrix_showcase.png)
 
 ### Observations
 
