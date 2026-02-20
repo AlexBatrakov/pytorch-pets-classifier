@@ -42,3 +42,7 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 
 - Scheduler winner: `cosine` (experiment `exp02_cosine_es_e30_s42`).
 - Plateau and step improve over baseline but do not beat cosine on test metrics.
+- Seed robustness (`42/123/777`) for cosine winner:
+  - `test_acc1 = 0.8717 ± 0.0059`
+  - `test_acc5 = 0.9830 ± 0.0014`
+  - `test_loss = 0.4551 ± 0.0160`

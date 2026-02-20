@@ -175,6 +175,14 @@ Training command:
 | `exp03b` | plateau (no ES) | 0.859 | 0.4864 |
 | `exp04` | step + ES | 0.851 | 0.4977 |
 
+### Seed robustness for winner (`cosine + ES`, seeds `42/123/777`)
+
+| Metric | Mean ± std |
+| --- | --- |
+| test_acc1 | `0.8717 ± 0.0059` |
+| test_acc5 | `0.9830 ± 0.0014` |
+| test_loss | `0.4551 ± 0.0160` |
+
 ![Training curves](assets/training_curves_showcase.png)
 ![Confusion matrix](assets/confusion_matrix_showcase.png)
 

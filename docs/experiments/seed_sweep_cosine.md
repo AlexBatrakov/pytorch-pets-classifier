@@ -17,9 +17,12 @@ python scripts/seed_sweep_summary.py --runs runs/exp02_cosine_es_e30_s42 runs/ex
 ```
 
 ## Results
-- test_acc1 mean ± std: TODO
-- test_acc5 mean ± std: TODO
-- test_loss mean ± std: TODO
+- test_acc1 mean ± std: `0.8717 ± 0.0059`
+- test_acc5 mean ± std: `0.9830 ± 0.0014`
+- test_loss mean ± std: `0.4551 ± 0.0160`
 
 ## Notes
-- Fill values from `scripts/seed_sweep_summary.py` output.
+- Per-run:
+  - `exp02 (seed 42)`: `test_acc1=0.8750`, `test_loss=0.4570`
+  - `exp05 (seed 123)`: `test_acc1=0.8752`, `test_loss=0.4383`
+  - `exp06 (seed 777)`: `test_acc1=0.8648`, `test_loss=0.4701`
