@@ -245,7 +245,7 @@ def main() -> None:
 		"created_at_utc": _utc_now_iso(),
 		"git_commit": _get_git_commit_hash(),
 		"device": str(device),
-		"torch_version": torch.__version__,
+		"torch_version": str(torch.__version__),
 		"python_version": platform.python_version(),
 		"platform": platform.platform(),
 		"total_params": total_params,

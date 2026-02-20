@@ -2,10 +2,24 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Iterable, Tuple
+from typing import Any, Iterable, Tuple
 
 import numpy as np
 import torch
+
+
+def load_checkpoint(path: str, map_location: str | torch.device = "cpu") -> Any:
+	"""
+	Load a full training checkpoint across PyTorch versions.
+
+	PyTorch 2.6 changed torch.load default to weights_only=True, which breaks
+	checkpoints that include metadata beyond tensors.
+	"""
+	try:
+		return torch.load(path, map_location=map_location, weights_only=False)
+	except TypeError:
+		# Older PyTorch versions may not support the weights_only argument.
+		return torch.load(path, map_location=map_location)
 
 
 def set_seed(seed: int, deterministic: bool = False) -> None:

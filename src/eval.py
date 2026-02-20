@@ -9,7 +9,7 @@ import torch.nn as nn
 from .config import load_config
 from .data import build_loaders, build_test_loader
 from .model import build_model
-from .utils import accuracy_topk, get_device, set_seed
+from .utils import accuracy_topk, get_device, load_checkpoint, set_seed
 
 
 def main() -> None:
@@ -25,7 +25,7 @@ def main() -> None:
 	)
 	args = parser.parse_args()
 
-	ckpt = torch.load(args.ckpt, map_location="cpu")
+	ckpt = load_checkpoint(args.ckpt, map_location="cpu")
 	if args.config:
 		cfg = load_config(args.config)
 	else:

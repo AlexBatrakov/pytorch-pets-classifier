@@ -8,7 +8,7 @@ from PIL import Image
 from torchvision import transforms
 
 from .model import build_model
-from .utils import get_device
+from .utils import get_device, load_checkpoint
 
 
 def _val_transform() -> transforms.Compose:
@@ -32,7 +32,7 @@ def main() -> None:
 		print(f"Image not found: {args.image}")
 		return
 
-	ckpt = torch.load(args.ckpt, map_location="cpu")
+	ckpt = load_checkpoint(args.ckpt, map_location="cpu")
 	class_names = ckpt.get("class_names")
 	if not class_names:
 		print("Checkpoint missing class names.")
