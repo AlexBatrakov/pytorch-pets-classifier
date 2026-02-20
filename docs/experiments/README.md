@@ -25,6 +25,7 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 - Isolated plateau+ES run template: `docs/experiments/exp03_plateau_es_e30_s42.md`.
 - Isolated plateau-noES control run template: `docs/experiments/exp03b_plateau_noes_e30_s42.md`.
 - Isolated step+ES run template: `docs/experiments/exp04_step_es_e30_s42.md`.
+- Seed robustness page for cosine winner: `docs/experiments/seed_sweep_cosine.md`.
 - Each experiment page includes embedded training curves and confusion matrix images.
 
 ## Comparison table

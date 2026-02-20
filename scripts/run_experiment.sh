@@ -29,8 +29,8 @@ fi
 mkdir -p "${ASSETS_DIR}"
 
 python -m src.train --config "${CONFIG_PATH}"
-python -m src.eval --ckpt "${CKPT_PATH}" --split val
-python -m src.eval --ckpt "${CKPT_PATH}" --split test --cm-out "${ASSETS_DIR}/confusion_matrix.png" --cm-normalize
+python -m src.eval --ckpt "${CKPT_PATH}" --split val --json-out "${RUN_DIR}/artifacts/val_metrics.json"
+python -m src.eval --ckpt "${CKPT_PATH}" --split test --json-out "${RUN_DIR}/artifacts/test_metrics.json" --cm-out "${ASSETS_DIR}/confusion_matrix.png" --cm-normalize
 python -m src.plot_metrics --metrics "${METRICS_PATH}" --out "${ASSETS_DIR}/training_curves.png"
 
 echo "Done. Run artifacts:"

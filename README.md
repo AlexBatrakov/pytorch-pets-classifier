@@ -76,6 +76,14 @@ Run the fourth experiment (step scheduler + early stopping):
 ./scripts/run_experiment.sh configs/experiments/exp04_step_es_e30_s42.yaml runs/exp04_step_es_e30_s42
 ```
 
+Seed sweep for the current winner (`cosine + early stopping`):
+
+```bash
+./scripts/run_experiment.sh configs/experiments/exp05_cosine_es_e30_s123.yaml runs/exp05_cosine_es_e30_s123
+./scripts/run_experiment.sh configs/experiments/exp06_cosine_es_e30_s777.yaml runs/exp06_cosine_es_e30_s777
+python scripts/seed_sweep_summary.py --runs runs/exp02_cosine_es_e30_s42 runs/exp05_cosine_es_e30_s123 runs/exp06_cosine_es_e30_s777
+```
+
 Recommended workflow:
 - Keep one high-level summary in this README.
 - Keep detailed per-run notes in `docs/experiments/*.md`.

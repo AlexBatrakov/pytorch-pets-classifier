@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 
 import torch
@@ -17,6 +18,7 @@ def main() -> None:
 	parser.add_argument("--ckpt", default="checkpoints/best.pt")
 	parser.add_argument("--config", default=None)
 	parser.add_argument("--split", default="val", choices=["val", "test"])
+	parser.add_argument("--json-out", default=None, help="Save metrics as JSON to path")
 	parser.add_argument("--cm-out", default=None, help="Save confusion matrix image to path")
 	parser.add_argument(
 		"--cm-normalize",
@@ -74,6 +76,21 @@ def main() -> None:
 
 	split_label = "Test" if args.split == "test" else "Val"
 	print(f"{split_label} loss {val_loss:.4f} | acc@1 {val_acc1:.3f} | acc@5 {val_acc5:.3f}")
+
+	if args.json_out:
+		os.makedirs(os.path.dirname(args.json_out) or ".", exist_ok=True)
+		with open(args.json_out, "w", encoding="utf-8") as f:
+			json.dump(
+				{
+					"split": args.split,
+					"loss": float(val_loss),
+					"acc1": float(val_acc1),
+					"acc5": float(val_acc5),
+					"ckpt": args.ckpt,
+				},
+				f,
+				indent=2,
+			)
 
 	try:
 		from sklearn.metrics import confusion_matrix
