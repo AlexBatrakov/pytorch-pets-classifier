@@ -64,6 +64,18 @@ Run the second experiment (cosine scheduler + early stopping):
 ./scripts/run_experiment.sh configs/experiments/exp02_cosine_es_e30_s42.yaml runs/exp02_cosine_es_e30_s42
 ```
 
+Run the third experiment (plateau scheduler + early stopping):
+
+```bash
+./scripts/run_experiment.sh configs/experiments/exp03_plateau_es_e30_s42.yaml runs/exp03_plateau_es_e30_s42
+```
+
+Run the fourth experiment (step scheduler + early stopping):
+
+```bash
+./scripts/run_experiment.sh configs/experiments/exp04_step_es_e30_s42.yaml runs/exp04_step_es_e30_s42
+```
+
 Recommended workflow:
 - Keep one high-level summary in this README.
 - Keep detailed per-run notes in `docs/experiments/*.md`.
@@ -146,6 +158,14 @@ Training command:
 | test_acc1 | 0.8170 | 0.8750 | +5.80 pp |
 | test_loss | 0.5881 | 0.4570 | -0.1311 |
 | test_acc5 | 0.9740 | 0.9840 | +1.00 pp |
+
+### Scheduler sweep (seed 42)
+
+| Experiment | Scheduler | Test acc@1 | Test loss |
+| --- | --- | --- | --- |
+| `exp02` | cosine + ES | 0.875 | 0.4570 |
+| `exp03b` | plateau (no ES) | 0.859 | 0.4864 |
+| `exp04` | step + ES | 0.851 | 0.4977 |
 
 ![Training curves](assets/training_curves_showcase.png)
 ![Confusion matrix](assets/confusion_matrix_showcase.png)

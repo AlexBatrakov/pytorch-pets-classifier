@@ -1,0 +1,37 @@
+seed: 42
+deterministic: false
+
+data:
+  batch_size: 32
+  num_workers: 0
+  pin_memory: false
+  val_split: 0.2
+  download: true
+
+train:
+  epochs: 30
+  lr: 0.0003
+  weight_decay: 0.01
+  freeze_backbone: false
+  freeze_epochs: 0
+  scheduler:
+    name: plateau
+    monitor: val_loss
+    mode: min
+    factor: 0.5
+    patience: 2
+    min_lr: 0.000001
+  early_stopping:
+    enabled: false
+    monitor: val_acc1
+    mode: max
+    patience: 6
+    min_delta: 0.001
+
+logging:
+  print_every: 50
+
+paths:
+  data_dir: ./data
+  checkpoints_dir: ./runs/exp03b_plateau_noes_e30_s42/checkpoints
+  artifacts_dir: ./runs/exp03b_plateau_noes_e30_s42/artifacts

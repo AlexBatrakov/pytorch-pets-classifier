@@ -22,6 +22,9 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 - Isolated baseline run template: `docs/experiments/exp01_baseline_e15_s42.md`.
 - Runner script: `scripts/run_experiment.sh`.
 - Isolated cosine+ES run template: `docs/experiments/exp02_cosine_es_e30_s42.md`.
+- Isolated plateau+ES run template: `docs/experiments/exp03_plateau_es_e30_s42.md`.
+- Isolated plateau-noES control run template: `docs/experiments/exp03b_plateau_noes_e30_s42.md`.
+- Isolated step+ES run template: `docs/experiments/exp04_step_es_e30_s42.md`.
 - Each experiment page includes embedded training curves and confusion matrix images.
 
 ## Comparison table
@@ -30,3 +33,11 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 | --- | --- | --- | --- | --- | --- |
 | `exp01_baseline_e15_s42` | `configs/experiments/exp01_baseline_e15_s42.yaml` | 7 | 15 | `0.4513 / 0.863 / 0.986` | `0.5881 / 0.817 / 0.974` |
 | `exp02_cosine_es_e30_s42` | `configs/experiments/exp02_cosine_es_e30_s42.yaml` | 23 | 29 (early stop) | `0.2890 / 0.914 / 0.988` | `0.4570 / 0.875 / 0.984` |
+| `exp03_plateau_es_e30_s42` | `configs/experiments/exp03_plateau_es_e30_s42.yaml` | 12 | 18 (early stop) | `0.3341 / 0.906 / 0.989` | `0.4906 / 0.852 / 0.982` |
+| `exp03b_plateau_noes_e30_s42` | `configs/experiments/exp03b_plateau_noes_e30_s42.yaml` | 21 | 30 | `0.3322 / 0.908 / 0.989` | `0.4864 / 0.859 / 0.981` |
+| `exp04_step_es_e30_s42` | `configs/experiments/exp04_step_es_e30_s42.yaml` | 13 | 19 (early stop) | `0.3416 / 0.909 / 0.989` | `0.4977 / 0.851 / 0.982` |
+
+## Current winner
+
+- Scheduler winner: `cosine` (experiment `exp02_cosine_es_e30_s42`).
+- Plateau and step improve over baseline but do not beat cosine on test metrics.
