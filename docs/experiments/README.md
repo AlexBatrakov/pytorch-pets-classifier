@@ -26,6 +26,8 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 - Isolated plateau-noES control run template: `docs/experiments/exp03b_plateau_noes_e30_s42.md`.
 - Isolated step+ES run template: `docs/experiments/exp04_step_es_e30_s42.md`.
 - Seed robustness page for cosine winner: `docs/experiments/seed_sweep_cosine.md`.
+- Batch-size sweep run templates: `exp07` (`bs16`) and `exp08` (`bs64`).
+- Freeze strategy run template: `exp09` (`freeze_epochs=2`).
 - Each experiment page includes embedded training curves and confusion matrix images.
 
 ## Comparison table
@@ -37,6 +39,9 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 | `exp03_plateau_es_e30_s42` | `configs/experiments/exp03_plateau_es_e30_s42.yaml` | 12 | 18 (early stop) | `0.3341 / 0.906 / 0.989` | `0.4906 / 0.852 / 0.982` |
 | `exp03b_plateau_noes_e30_s42` | `configs/experiments/exp03b_plateau_noes_e30_s42.yaml` | 21 | 30 | `0.3322 / 0.908 / 0.989` | `0.4864 / 0.859 / 0.981` |
 | `exp04_step_es_e30_s42` | `configs/experiments/exp04_step_es_e30_s42.yaml` | 13 | 19 (early stop) | `0.3416 / 0.909 / 0.989` | `0.4977 / 0.851 / 0.982` |
+| `exp07_cosine_es_bs16_lr15e4_s42` | `configs/experiments/exp07_cosine_es_bs16_lr15e4_s42.yaml` | 17 | 23 (early stop) | `0.2934 / 0.910 / 0.990` | `0.4405 / 0.877 / 0.983` |
+| `exp08_cosine_es_bs64_lr6e4_s42` | `configs/experiments/exp08_cosine_es_bs64_lr6e4_s42.yaml` | 22 | 28 (early stop) | `0.3335 / 0.902 / 0.993` | `0.5044 / 0.857 / 0.978` |
+| `exp09_cosine_es_freeze2_s42` | `configs/experiments/exp09_cosine_es_freeze2_s42.yaml` | 11 | 17 (early stop) | `0.4156 / 0.886 / 0.985` | `0.5968 / 0.826 / 0.974` |
 
 ## Current winner
 
@@ -46,3 +51,4 @@ Use one file per experiment when you want to keep details (settings, metrics, no
   - `test_acc1 = 0.8717 ± 0.0059`
   - `test_acc5 = 0.9830 ± 0.0014`
   - `test_loss = 0.4551 ± 0.0160`
+- Best single-seed run so far: `exp07` (`batch=16`, `lr=1.5e-4`) with `test_acc1=0.877`.

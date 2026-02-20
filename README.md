@@ -84,6 +84,14 @@ Seed sweep for the current winner (`cosine + early stopping`):
 python scripts/seed_sweep_summary.py --runs runs/exp02_cosine_es_e30_s42 runs/exp05_cosine_es_e30_s123 runs/exp06_cosine_es_e30_s777
 ```
 
+Batch/freeze sweep for the current winner:
+
+```bash
+./scripts/run_experiment.sh configs/experiments/exp07_cosine_es_bs16_lr15e4_s42.yaml runs/exp07_cosine_es_bs16_lr15e4_s42
+./scripts/run_experiment.sh configs/experiments/exp08_cosine_es_bs64_lr6e4_s42.yaml runs/exp08_cosine_es_bs64_lr6e4_s42
+./scripts/run_experiment.sh configs/experiments/exp09_cosine_es_freeze2_s42.yaml runs/exp09_cosine_es_freeze2_s42
+```
+
 Recommended workflow:
 - Keep one high-level summary in this README.
 - Keep detailed per-run notes in `docs/experiments/*.md`.
@@ -183,6 +191,16 @@ Training command:
 | test_acc5 | `0.9830 ± 0.0014` |
 | test_loss | `0.4551 ± 0.0160` |
 
+### Batch/freeze ablation (seed `42`)
+
+| Experiment | Change vs `exp02` | Test acc@1 | Test loss |
+| --- | --- | --- | --- |
+| `exp07` | `batch=16`, `lr=1.5e-4` | `0.877` | `0.4405` |
+| `exp08` | `batch=64`, `lr=6e-4` | `0.857` | `0.5044` |
+| `exp09` | `freeze_backbone=true`, `freeze_epochs=2` | `0.826` | `0.5968` |
+
+`exp07` is the best single-seed run so far, but `exp02` stays the default showcase because it already has multi-seed robustness results.
+
 ![Training curves](assets/training_curves_showcase.png)
 ![Confusion matrix](assets/confusion_matrix_showcase.png)
 
@@ -190,7 +208,8 @@ Training command:
 
 - Constant LR baseline underfits later training stages compared to cosine schedule.
 - With `patience=6`, early stopping avoids stopping too early and captures late improvements.
-- Validation and test both improve, so the gain is not only validation overfitting.
+- Smaller batch (`16`) improved single-seed quality, while larger batch (`64`) degraded quality.
+- Freezing backbone for 2 epochs hurts quality in this setup.
 
 ## Predict
 
