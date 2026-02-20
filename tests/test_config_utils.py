@@ -33,6 +33,26 @@ def test_apply_overrides_updates_nested_and_keeps_original() -> None:
 	assert "new_field" not in base_cfg
 
 
+def test_apply_overrides_skips_none_and_creates_deep_branch() -> None:
+	base_cfg = {
+		"train": {"epochs": 5, "lr": 1e-3},
+		"logging": {"print_every": 50},
+	}
+	overrides = {
+		"train.lr": None,
+		"train.epochs": 10,
+		"model.head.dropout": 0.2,
+		"logging.print_every": None,
+	}
+
+	new_cfg = apply_overrides(base_cfg, overrides)
+
+	assert new_cfg["train"]["epochs"] == 10
+	assert new_cfg["train"]["lr"] == 1e-3
+	assert new_cfg["model"]["head"]["dropout"] == 0.2
+	assert new_cfg["logging"]["print_every"] == 50
+
+
 def test_accuracy_topk_returns_expected_values() -> None:
 	logits = torch.tensor(
 		[

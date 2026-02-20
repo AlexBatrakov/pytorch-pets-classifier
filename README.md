@@ -22,6 +22,11 @@ pip install -r requirements-dev.txt
 python -m pytest -q
 ```
 
+Test scope:
+- Unit: config overrides, metrics math, device selection, best-checkpoint selection logic.
+- Integration: metrics CSV write path and training-curves plotting from CSV.
+- Smoke: imports and basic model/dataset construction.
+
 ## Train
 
 ```bash

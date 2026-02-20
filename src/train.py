@@ -60,6 +60,13 @@ def _build_checkpoint_payload(
 	}
 
 
+def _update_best_val_acc(best_val_acc: float, current_val_acc: float) -> Tuple[float, bool]:
+	is_best = current_val_acc > best_val_acc
+	if is_best:
+		return current_val_acc, True
+	return best_val_acc, False
+
+
 def _init_metrics_csv(path: str) -> None:
 	os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
 	with open(path, "w", newline="", encoding="utf-8") as f:
@@ -294,9 +301,8 @@ def main() -> None:
 			"lr": current_lr,
 		}
 
-		is_best = val_acc1 > best_val_acc
+		best_val_acc, is_best = _update_best_val_acc(best_val_acc, val_acc1)
 		if is_best:
-			best_val_acc = val_acc1
 			best_payload = _build_checkpoint_payload(
 				model=model,
 				class_names=class_names,
