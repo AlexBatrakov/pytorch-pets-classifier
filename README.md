@@ -36,6 +36,7 @@ python -m src.train --epochs 10 --batch-size 64 --lr 3e-4 --freeze-epochs 2 --nu
 
 Best checkpoint is saved to `./checkpoints/best.pt`.
 Per-epoch metrics are saved to `./artifacts/metrics.csv`.
+Each checkpoint also stores run metadata (`git_commit`, `created_at_utc`, `device`, `torch_version`, parameter counts, and epoch metrics).
 
 Example `metrics.csv`:
 

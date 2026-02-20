@@ -3,7 +3,11 @@ from __future__ import annotations
 import argparse
 import csv
 import os
-from typing import Dict, Tuple
+import platform
+import subprocess
+import sys
+from datetime import datetime, timezone
+from typing import Any, Dict, Tuple
 
 import torch
 import torch.nn as nn
@@ -15,6 +19,45 @@ from .config import apply_overrides, load_config
 from .data import build_loaders
 from .model import build_model
 from .utils import AverageMeter, accuracy_topk, get_device, set_seed
+
+
+def _utc_now_iso() -> str:
+	return datetime.now(timezone.utc).isoformat()
+
+
+def _get_git_commit_hash() -> str:
+	try:
+		out = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
+		return out or "unknown"
+	except Exception:
+		return "unknown"
+
+
+def _count_parameters(model: nn.Module) -> Tuple[int, int]:
+	total = sum(p.numel() for p in model.parameters())
+	trainable = sum(p.numel() for p in model.parameters() if p.requires_grad)
+	return total, trainable
+
+
+def _build_checkpoint_payload(
+	model: nn.Module,
+	class_names: list[str],
+	cfg: Dict[str, Any],
+	epoch: int,
+	best_val_acc: float,
+	epoch_metrics: Dict[str, float],
+	run_metadata: Dict[str, Any],
+) -> Dict[str, Any]:
+	return {
+		"model_state_dict": model.state_dict(),
+		"class_names": class_names,
+		"config": cfg,
+		"epoch": epoch,
+		"best_val_acc": best_val_acc,
+		"epoch_metrics": epoch_metrics,
+		"run_metadata": run_metadata,
+		"saved_at_utc": _utc_now_iso(),
+	}
 
 
 def _init_metrics_csv(path: str) -> None:
@@ -197,6 +240,21 @@ def main() -> None:
 	os.makedirs(cfg["paths"]["checkpoints_dir"], exist_ok=True)
 	_init_metrics_csv(metrics_path)
 
+	total_params, trainable_params = _count_parameters(model)
+	run_metadata: Dict[str, Any] = {
+		"created_at_utc": _utc_now_iso(),
+		"git_commit": _get_git_commit_hash(),
+		"device": str(device),
+		"torch_version": torch.__version__,
+		"python_version": platform.python_version(),
+		"platform": platform.platform(),
+		"total_params": total_params,
+		"trainable_params": trainable_params,
+		"command": " ".join(sys.argv),
+		"metrics_csv": metrics_path,
+		"config_path": args.config,
+	}
+
 	epochs = int(train_cfg.get("epochs", 1))
 	for epoch in range(epochs):
 		if freeze_epochs > 0 and epoch == freeze_epochs:
@@ -226,30 +284,40 @@ def main() -> None:
 			lr=current_lr,
 		)
 
+		epoch_metrics = {
+			"train_loss": train_loss,
+			"train_acc1": train_acc1,
+			"train_acc5": train_acc5,
+			"val_loss": val_loss,
+			"val_acc1": val_acc1,
+			"val_acc5": val_acc5,
+			"lr": current_lr,
+		}
+
 		is_best = val_acc1 > best_val_acc
 		if is_best:
 			best_val_acc = val_acc1
-			torch.save(
-				{
-					"model_state_dict": model.state_dict(),
-					"class_names": class_names,
-					"config": cfg,
-					"epoch": epoch + 1,
-					"best_val_acc": best_val_acc,
-				},
-				best_path,
+			best_payload = _build_checkpoint_payload(
+				model=model,
+				class_names=class_names,
+				cfg=cfg,
+				epoch=epoch + 1,
+				best_val_acc=best_val_acc,
+				epoch_metrics=epoch_metrics,
+				run_metadata=run_metadata,
 			)
+			torch.save(best_payload, best_path)
 
-		torch.save(
-			{
-				"model_state_dict": model.state_dict(),
-				"class_names": class_names,
-				"config": cfg,
-				"epoch": epoch + 1,
-				"best_val_acc": best_val_acc,
-			},
-			last_path,
+		last_payload = _build_checkpoint_payload(
+			model=model,
+			class_names=class_names,
+			cfg=cfg,
+			epoch=epoch + 1,
+			best_val_acc=best_val_acc,
+			epoch_metrics=epoch_metrics,
+			run_metadata=run_metadata,
 		)
+		torch.save(last_payload, last_path)
 
 		print(
 			f"Epoch {epoch + 1}/{epochs} | "
