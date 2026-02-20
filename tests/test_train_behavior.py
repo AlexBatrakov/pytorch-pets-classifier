@@ -2,13 +2,18 @@ from __future__ import annotations
 
 import csv
 
+import pytest
 import torch.nn as nn
+from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from src.train import (
 	_append_metrics_csv,
+	_build_optimizer_and_scheduler,
 	_build_checkpoint_payload,
 	_count_parameters,
+	_get_metric_value,
 	_init_metrics_csv,
+	_is_metric_improved,
 	_update_best_val_acc,
 )
 
@@ -25,6 +30,23 @@ def test_update_best_val_acc_only_on_strict_improvement() -> None:
 	best, is_best = _update_best_val_acc(best, 0.81)
 	assert is_best is False
 	assert best == 0.82
+
+
+def test_is_metric_improved_respects_mode_and_min_delta() -> None:
+	assert _is_metric_improved(current=0.81, best=0.80, mode="max", min_delta=0.0)
+	assert not _is_metric_improved(current=0.8005, best=0.80, mode="max", min_delta=0.001)
+	assert _is_metric_improved(current=0.49, best=0.50, mode="min", min_delta=0.0)
+	assert not _is_metric_improved(current=0.4995, best=0.50, mode="min", min_delta=0.001)
+	with pytest.raises(ValueError):
+		_is_metric_improved(current=1.0, best=0.0, mode="unknown", min_delta=0.0)
+
+
+def test_get_metric_value_raises_on_unknown_metric() -> None:
+	metrics = {"val_acc1": 0.8, "val_loss": 0.5}
+	assert _get_metric_value(metrics, "val_acc1") == 0.8
+
+	with pytest.raises(ValueError):
+		_get_metric_value(metrics, "missing_metric")
 
 
 def test_build_checkpoint_payload_contains_required_keys() -> None:
@@ -104,3 +126,21 @@ def test_metrics_csv_init_and_append(tmp_path) -> None:
 	assert len(rows) == 2
 	assert rows[1][0] == "1"
 	assert rows[1][-1] == "0.00030000"
+
+
+def test_build_optimizer_and_scheduler_plateau() -> None:
+	model = nn.Linear(4, 2)
+	train_cfg = {
+		"lr": 3e-4,
+		"weight_decay": 0.01,
+		"scheduler": {
+			"name": "plateau",
+			"mode": "min",
+			"factor": 0.5,
+			"patience": 2,
+			"min_lr": 1e-6,
+		},
+	}
+	optimizer, scheduler = _build_optimizer_and_scheduler(model, train_cfg)
+	assert optimizer is not None
+	assert isinstance(scheduler, ReduceLROnPlateau)

@@ -28,10 +28,20 @@ Test scope:
 - Integration: metrics CSV write path and training-curves plotting from CSV.
 - Smoke: imports and basic model/dataset construction.
 
+Experiment logs:
+- Main summary stays in this README.
+- Detailed run notes go to `docs/experiments/README.md`.
+
 ## Train
 
 ```bash
 python -m src.train --config configs/default.yaml
+```
+
+Run with cosine scheduler + early stopping preset:
+
+```bash
+python -m src.train --config configs/cosine_earlystop.yaml
 ```
 
 Common overrides:

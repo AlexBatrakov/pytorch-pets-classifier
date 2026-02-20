@@ -12,7 +12,7 @@ from typing import Any, Dict, Tuple
 import torch
 import torch.nn as nn
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import CosineAnnealingLR, StepLR
+from torch.optim.lr_scheduler import CosineAnnealingLR, ReduceLROnPlateau, StepLR
 from tqdm import tqdm
 
 from .config import apply_overrides, load_config
@@ -65,6 +65,26 @@ def _update_best_val_acc(best_val_acc: float, current_val_acc: float) -> Tuple[f
 	if is_best:
 		return current_val_acc, True
 	return best_val_acc, False
+
+
+def _get_metric_value(metrics: Dict[str, float], metric_name: str) -> float:
+	if metric_name not in metrics:
+		raise ValueError(f"Unknown metric '{metric_name}'. Available: {sorted(metrics.keys())}")
+	return float(metrics[metric_name])
+
+
+def _is_metric_improved(
+	current: float,
+	best: float,
+	mode: str,
+	min_delta: float,
+) -> bool:
+	mode_norm = mode.lower()
+	if mode_norm == "max":
+		return current > best + min_delta
+	if mode_norm == "min":
+		return current < best - min_delta
+	raise ValueError(f"Unsupported early stopping mode '{mode}'. Use 'max' or 'min'.")
 
 
 def _init_metrics_csv(path: str) -> None:
@@ -143,6 +163,14 @@ def _build_optimizer_and_scheduler(
 		scheduler = CosineAnnealingLR(
 			optimizer,
 			T_max=sched_cfg.get("t_max", 10),
+		)
+	elif name == "plateau":
+		scheduler = ReduceLROnPlateau(
+			optimizer,
+			mode=str(sched_cfg.get("mode", "min")),
+			factor=float(sched_cfg.get("factor", 0.5)),
+			patience=int(sched_cfg.get("patience", 2)),
+			min_lr=float(sched_cfg.get("min_lr", 1e-6)),
 		)
 
 	return optimizer, scheduler
@@ -230,6 +258,15 @@ def main() -> None:
 	train_cfg = cfg["train"]
 	freeze_epochs = int(train_cfg.get("freeze_epochs", 0) or 0)
 	initial_freeze = bool(train_cfg.get("freeze_backbone", False) or freeze_epochs > 0)
+	early_cfg = train_cfg.get("early_stopping", {}) or {}
+	es_enabled = bool(early_cfg.get("enabled", False))
+	es_monitor = str(early_cfg.get("monitor", "val_acc1"))
+	es_mode = str(early_cfg.get("mode", "max"))
+	es_patience = int(early_cfg.get("patience", 3))
+	es_min_delta = float(early_cfg.get("min_delta", 0.0))
+
+	best_es_metric = float("-inf") if es_mode.lower() == "max" else float("inf")
+	epochs_without_improve = 0
 
 	model = build_model(num_classes=len(class_names), pretrained=True, freeze_backbone=initial_freeze)
 	model.to(device)
@@ -260,6 +297,13 @@ def main() -> None:
 		"command": " ".join(sys.argv),
 		"metrics_csv": metrics_path,
 		"config_path": args.config,
+		"early_stopping": {
+			"enabled": es_enabled,
+			"monitor": es_monitor,
+			"mode": es_mode,
+			"patience": es_patience,
+			"min_delta": es_min_delta,
+		},
 	}
 
 	epochs = int(train_cfg.get("epochs", 1))
@@ -275,10 +319,24 @@ def main() -> None:
 			model, val_loader, criterion, device
 		)
 
+		epoch_metrics = {
+			"train_loss": train_loss,
+			"train_acc1": train_acc1,
+			"train_acc5": train_acc5,
+			"val_loss": val_loss,
+			"val_acc1": val_acc1,
+			"val_acc5": val_acc5,
+		}
+
 		if scheduler is not None:
-			scheduler.step()
+			if isinstance(scheduler, ReduceLROnPlateau):
+				sched_monitor = str(train_cfg.get("scheduler", {}).get("monitor", "val_loss"))
+				scheduler.step(_get_metric_value(epoch_metrics, sched_monitor))
+			else:
+				scheduler.step()
 
 		current_lr = optimizer.param_groups[0]["lr"]
+		epoch_metrics["lr"] = current_lr
 		_append_metrics_csv(
 			path=metrics_path,
 			epoch=epoch + 1,
@@ -290,16 +348,6 @@ def main() -> None:
 			val_acc5=val_acc5,
 			lr=current_lr,
 		)
-
-		epoch_metrics = {
-			"train_loss": train_loss,
-			"train_acc1": train_acc1,
-			"train_acc5": train_acc5,
-			"val_loss": val_loss,
-			"val_acc1": val_acc1,
-			"val_acc5": val_acc5,
-			"lr": current_lr,
-		}
 
 		best_val_acc, is_best = _update_best_val_acc(best_val_acc, val_acc1)
 		if is_best:
@@ -330,6 +378,20 @@ def main() -> None:
 			f"train loss {train_loss:.4f} acc@1 {train_acc1:.3f} acc@5 {train_acc5:.3f} | "
 			f"val loss {val_loss:.4f} acc@1 {val_acc1:.3f} acc@5 {val_acc5:.3f}"
 		)
+
+		if es_enabled:
+			current_es_metric = _get_metric_value(epoch_metrics, es_monitor)
+			if _is_metric_improved(current_es_metric, best_es_metric, es_mode, es_min_delta):
+				best_es_metric = current_es_metric
+				epochs_without_improve = 0
+			else:
+				epochs_without_improve += 1
+				if epochs_without_improve >= es_patience:
+					print(
+						"Early stopping triggered: "
+						f"no improvement in {es_monitor} for {es_patience} epochs."
+					)
+					break
 
 	print(f"Best checkpoint saved to: {best_path}")
 	print(f"Best val acc: {best_val_acc:.4f}")
