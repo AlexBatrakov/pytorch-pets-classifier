@@ -46,6 +46,12 @@ epoch,train_loss,train_acc1,train_acc5,val_loss,val_acc1,val_acc5,lr
 2,0.890800,0.749000,0.945000,0.516700,0.827000,0.990000,0.00030000
 ```
 
+Build training curves from the metrics file:
+
+```bash
+python -m src.plot_metrics --metrics artifacts/metrics.csv --out assets/training_curves.png
+```
+
 ## Evaluate
 
 ```bash
@@ -72,6 +78,7 @@ python -m src.eval --ckpt checkpoints/best.pt --split test --cm-out assets/confu
 | Test | 0.805 | 0.980 |
 
 ![Confusion matrix](assets/confusion_matrix.png)
+![Training curves](assets/training_curves.png)
 
 ## Predict
 
