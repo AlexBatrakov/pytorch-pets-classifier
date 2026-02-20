@@ -31,6 +31,11 @@ If you intentionally rerun into the same folder:
 - Val: `loss 0.4513 | acc@1 0.863 | acc@5 0.986`
 - Test: `loss 0.5881 | acc@1 0.817 | acc@5 0.974`
 
+## Visuals
+
+![Training curves (exp01)](assets/exp01_training_curves.png)
+![Confusion matrix (exp01)](assets/exp01_confusion_matrix.png)
+
 ## Notes
 - 15 epochs were fully trained without early stopping.
 - Validation quality peaks around epoch 7, then mostly oscillates/degrades.

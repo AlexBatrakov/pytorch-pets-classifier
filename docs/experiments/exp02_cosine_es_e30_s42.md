@@ -32,6 +32,11 @@ If you intentionally rerun into the same folder:
 - Val: `loss 0.2890 | acc@1 0.914 | acc@5 0.988`
 - Test: `loss 0.4570 | acc@1 0.875 | acc@5 0.984`
 
+## Visuals
+
+![Training curves (exp02)](assets/exp02_training_curves.png)
+![Confusion matrix (exp02)](assets/exp02_confusion_matrix.png)
+
 ## Notes
 - Compare this run with `docs/experiments/exp01_baseline_e15_s42.md`.
 - Improvement vs baseline (`exp01`): `+5.16` pp on val acc@1 and `+5.8` pp on test acc@1.

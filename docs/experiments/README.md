@@ -22,6 +22,7 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 - Isolated baseline run template: `docs/experiments/exp01_baseline_e15_s42.md`.
 - Runner script: `scripts/run_experiment.sh`.
 - Isolated cosine+ES run template: `docs/experiments/exp02_cosine_es_e30_s42.md`.
+- Each experiment page includes embedded training curves and confusion matrix images.
 
 ## Comparison table
 
