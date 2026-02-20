@@ -9,26 +9,18 @@ data:
   download: true
 
 train:
-  epochs: 5
+  epochs: 15
   lr: 0.0003
   weight_decay: 0.01
   freeze_backbone: false
   freeze_epochs: 0
   scheduler:
-    name: none  # none | step | cosine | plateau
-    step_size: 5
-    gamma: 0.1
-    t_max: 10
-    mode: min
-    factor: 0.5
-    patience: 2
-    min_lr: 0.000001
-    monitor: val_loss
+    name: none
   early_stopping:
     enabled: false
     monitor: val_acc1
     mode: max
-    patience: 6
+    patience: 4
     min_delta: 0.001
 
 logging:
@@ -36,5 +28,5 @@ logging:
 
 paths:
   data_dir: ./data
-  checkpoints_dir: ./checkpoints
-  artifacts_dir: ./artifacts
+  checkpoints_dir: ./runs/exp01_baseline_e15_s42/checkpoints
+  artifacts_dir: ./runs/exp01_baseline_e15_s42/artifacts

@@ -219,6 +219,7 @@ __marimo__/
 # Datasets / artifacts
 data/
 artifacts/
+runs/
 assets/training_curves_*.png
 checkpoints/
 *.pt

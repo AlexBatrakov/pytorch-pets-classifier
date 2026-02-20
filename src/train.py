@@ -319,6 +319,8 @@ def main() -> None:
 			model, val_loader, criterion, device
 		)
 
+		# Log LR actually used during this epoch. Scheduler updates LR for the next epoch.
+		current_lr = optimizer.param_groups[0]["lr"]
 		epoch_metrics = {
 			"train_loss": train_loss,
 			"train_acc1": train_acc1,
@@ -326,17 +328,9 @@ def main() -> None:
 			"val_loss": val_loss,
 			"val_acc1": val_acc1,
 			"val_acc5": val_acc5,
+			"lr": current_lr,
 		}
 
-		if scheduler is not None:
-			if isinstance(scheduler, ReduceLROnPlateau):
-				sched_monitor = str(train_cfg.get("scheduler", {}).get("monitor", "val_loss"))
-				scheduler.step(_get_metric_value(epoch_metrics, sched_monitor))
-			else:
-				scheduler.step()
-
-		current_lr = optimizer.param_groups[0]["lr"]
-		epoch_metrics["lr"] = current_lr
 		_append_metrics_csv(
 			path=metrics_path,
 			epoch=epoch + 1,
@@ -348,6 +342,13 @@ def main() -> None:
 			val_acc5=val_acc5,
 			lr=current_lr,
 		)
+
+		if scheduler is not None:
+			if isinstance(scheduler, ReduceLROnPlateau):
+				sched_monitor = str(train_cfg.get("scheduler", {}).get("monitor", "val_loss"))
+				scheduler.step(_get_metric_value(epoch_metrics, sched_monitor))
+			else:
+				scheduler.step()
 
 		best_val_acc, is_best = _update_best_val_acc(best_val_acc, val_acc1)
 		if is_best:

@@ -44,6 +44,30 @@ Run with cosine scheduler + early stopping preset:
 python -m src.train --config configs/cosine_earlystop.yaml
 ```
 
+## Experiments
+
+Use isolated run folders to avoid overwriting `best.pt`, `last.pt`, and `metrics.csv` between experiments.
+
+Run the first isolated baseline experiment:
+
+```bash
+source .venv/bin/activate
+./scripts/run_experiment.sh configs/experiments/exp01_baseline_e15_s42.yaml runs/exp01_baseline_e15_s42
+```
+
+The script refuses to overwrite an existing run folder by default.
+Use `--force` only when you intentionally want to rerun into the same `run_dir`.
+
+Run the second experiment (cosine scheduler + early stopping):
+
+```bash
+./scripts/run_experiment.sh configs/experiments/exp02_cosine_es_e30_s42.yaml runs/exp02_cosine_es_e30_s42
+```
+
+Recommended workflow:
+- Keep one high-level summary in this README.
+- Keep detailed per-run notes in `docs/experiments/*.md`.
+
 Common overrides:
 
 ```bash
@@ -88,39 +112,49 @@ python -m src.eval --ckpt checkpoints/best.pt --split test --cm-out assets/confu
 
 ## Results
 
-### Baseline experiment
+### Current best experiment (`exp02_cosine_es_e30_s42`)
 
-Training command used for the baseline below:
+Training command:
 
 ```bash
-python -m src.train --config configs/default.yaml --epochs 15
+./scripts/run_experiment.sh --force configs/experiments/exp02_cosine_es_e30_s42.yaml runs/exp02_cosine_es_e30_s42
 ```
 
 | Parameter | Value |
 | --- | --- |
 | Model | ResNet18 (ImageNet pretrained) |
 | Dataset | Oxford-IIIT Pets (37 classes) |
-| Epochs | 15 (best checkpoint at epoch 7 by val acc@1) |
-| Batch size | 32 |
 | Optimizer | AdamW |
-| Learning rate | 3e-4 |
-| Scheduler | none |
+| Initial LR | 3e-4 |
+| Scheduler | cosine (`t_max=30`) |
+| Early stopping | `monitor=val_acc1`, `patience=6`, `min_delta=0.001` |
+| Best epoch | 23 |
+| Stopped epoch | 29 (early stop) |
 
-### Final metrics (best checkpoint)
+### Metrics (best checkpoint)
 
 | Split | loss | acc@1 | acc@5 |
 | --- | --- | --- | --- |
-| Val | 0.4513 | 0.863 | 0.986 |
-| Test | 0.5881 | 0.817 | 0.974 |
+| Val | 0.2890 | 0.914 | 0.988 |
+| Test | 0.4570 | 0.875 | 0.984 |
+
+### Improvement vs baseline (`exp01_baseline_e15_s42`)
+
+| Metric | Baseline | Current best | Delta |
+| --- | --- | --- | --- |
+| val_acc1 | 0.8628 | 0.9144 | +5.16 pp |
+| test_acc1 | 0.8170 | 0.8750 | +5.80 pp |
+| test_loss | 0.5881 | 0.4570 | -0.1311 |
+| test_acc5 | 0.9740 | 0.9840 | +1.00 pp |
 
 ![Confusion matrix](assets/confusion_matrix.png)
 ![Training curves](assets/training_curves.png)
 
 ### Observations
 
-- Validation top-1 peaks at epoch 7, then does not improve meaningfully.
-- Around epochs 10-12+, val loss trends worse while train accuracy keeps increasing, indicating overfitting.
-- Top-5 stays high, so most errors are near-misses between visually similar breeds.
+- Constant LR baseline underfits later training stages compared to cosine schedule.
+- With `patience=6`, early stopping avoids stopping too early and captures late improvements.
+- Validation and test both improve, so the gain is not only validation overfitting.
 
 ## Predict
 

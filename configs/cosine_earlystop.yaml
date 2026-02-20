@@ -21,7 +21,7 @@ train:
     enabled: true
     monitor: val_acc1
     mode: max
-    patience: 4
+    patience: 6
     min_delta: 0.001
 
 logging:
