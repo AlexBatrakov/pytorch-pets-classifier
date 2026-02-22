@@ -148,6 +148,22 @@ python -m src.eval --ckpt checkpoints/best.pt --split test --cm-out assets/confu
 
 ## Results
 
+### How Final Model Was Chosen
+
+Selection rules used in this project:
+
+- **Within one run**: save `best.pt` by highest `val_acc1` (early stopping also monitors `val_acc1`).
+- **Across configs**: compare candidates on the same train/val/test split and keep a compact experiment log in `docs/experiments/README.md`.
+- **Do not trust single-seed peaks**: if a variant wins by one seed only, run a seed sweep (`42/123/777`).
+- **Prefer robustness over cherry-picking**: compare `mean ± std` across seeds, not only the best number.
+- **Use test metrics transparently**: test is reported for experiment comparison, and the final showcase choice is explicitly justified below.
+
+Final decision:
+
+- `exp07` (`batch=16`) produced the best **single-seed** `test_acc1` (`0.877`).
+- `exp02` (`cosine + ES`, `batch=32`) has better **3-seed average** and much lower variance.
+- Therefore `exp02` is kept as the main showcase model for this repository.
+
 ### Current best experiment (`exp02_cosine_es_e30_s42`)
 
 Training command:

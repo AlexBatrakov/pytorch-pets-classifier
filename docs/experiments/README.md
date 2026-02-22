@@ -46,6 +46,12 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 | `exp10_cosine_es_bs16_lr15e4_s123` | `configs/experiments/exp10_cosine_es_bs16_lr15e4_s123.yaml` | 9 | 15 (early stop) | `0.3347 / 0.912 / 0.995` | `0.4583 / 0.859 / 0.989` |
 | `exp11_cosine_es_bs16_lr15e4_s777` | `configs/experiments/exp11_cosine_es_bs16_lr15e4_s777.yaml` | 5 | 11 (early stop) | `0.3430 / 0.909 / 0.993` | `0.4936 / 0.844 / 0.983` |
 
+## Selection policy (project showcase)
+
+- Run-level checkpoint selection uses `val_acc1` (`best.pt`).
+- Candidate comparison uses the table above plus targeted seed sweeps for close contenders.
+- For final showcase choice, prefer higher `mean ± std` robustness across seeds over a better single-seed peak.
+
 ## Current winner
 
 - Scheduler winner: `cosine` (experiment `exp02_cosine_es_e30_s42`).
