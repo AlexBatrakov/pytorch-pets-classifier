@@ -246,6 +246,22 @@ Compared to `exp02`, this variant has a better peak single-seed score but worse 
 - Freezing backbone for 2 epochs hurts quality in this setup.
 - The `batch=16` variant is less stable across seeds than the default `batch=32` cosine setup.
 
+## Error Analysis (Showcase Model `exp02`)
+
+Detailed report:
+- `docs/experiments/error_analysis_exp02.md`
+
+Key takeaways from the `test` split:
+- Errors are concentrated in visually similar breeds (for example `American Pit Bull Terrier <-> Staffordshire Bull Terrier`, `Birman <-> Ragdoll`, `Basset Hound -> Beagle`).
+- `460` top-1 errors were made, but `402` of them (`87.4%`) still contain the true class in top-5 (the model is often “close”).
+- A subset of mistakes is overconfident (`20.4%` of errors have confidence `>= 0.90`), so confidence alone is not enough for trust.
+- Main weakness is fine-grained breed separation, not complete feature failure.
+
+Error analysis visuals (from `exp02` test split):
+
+![Top confusion pairs](docs/experiments/assets/exp02_error_confusion_top_pairs.png)
+![Overconfident mistakes gallery](docs/experiments/assets/exp02_error_gallery.png)
+
 ## Predict
 
 ```bash
