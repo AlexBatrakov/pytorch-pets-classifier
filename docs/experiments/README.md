@@ -26,6 +26,7 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 - Isolated plateau-noES control run template: `docs/experiments/exp03b_plateau_noes_e30_s42.md`.
 - Isolated step+ES run template: `docs/experiments/exp04_step_es_e30_s42.md`.
 - Seed robustness page for cosine winner: `docs/experiments/seed_sweep_cosine.md`.
+- Seed robustness page for small-batch cosine variant: `docs/experiments/seed_sweep_cosine_bs16.md`.
 - Batch-size sweep run templates: `exp07` (`bs16`) and `exp08` (`bs64`).
 - Freeze strategy run template: `exp09` (`freeze_epochs=2`).
 - Each experiment page includes embedded training curves and confusion matrix images.
@@ -42,6 +43,8 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 | `exp07_cosine_es_bs16_lr15e4_s42` | `configs/experiments/exp07_cosine_es_bs16_lr15e4_s42.yaml` | 17 | 23 (early stop) | `0.2934 / 0.910 / 0.990` | `0.4405 / 0.877 / 0.983` |
 | `exp08_cosine_es_bs64_lr6e4_s42` | `configs/experiments/exp08_cosine_es_bs64_lr6e4_s42.yaml` | 22 | 28 (early stop) | `0.3335 / 0.902 / 0.993` | `0.5044 / 0.857 / 0.978` |
 | `exp09_cosine_es_freeze2_s42` | `configs/experiments/exp09_cosine_es_freeze2_s42.yaml` | 11 | 17 (early stop) | `0.4156 / 0.886 / 0.985` | `0.5968 / 0.826 / 0.974` |
+| `exp10_cosine_es_bs16_lr15e4_s123` | `configs/experiments/exp10_cosine_es_bs16_lr15e4_s123.yaml` | 9 | 15 (early stop) | `0.3347 / 0.912 / 0.995` | `0.4583 / 0.859 / 0.989` |
+| `exp11_cosine_es_bs16_lr15e4_s777` | `configs/experiments/exp11_cosine_es_bs16_lr15e4_s777.yaml` | 5 | 11 (early stop) | `0.3430 / 0.909 / 0.993` | `0.4936 / 0.844 / 0.983` |
 
 ## Current winner
 
@@ -52,3 +55,8 @@ Use one file per experiment when you want to keep details (settings, metrics, no
   - `test_acc5 = 0.9830 ± 0.0014`
   - `test_loss = 0.4551 ± 0.0160`
 - Best single-seed run so far: `exp07` (`batch=16`, `lr=1.5e-4`) with `test_acc1=0.877`.
+- Robustness check for `exp07` (`batch=16`, seeds `42/123/777`):
+  - `test_acc1 = 0.8600 ± 0.0165`
+  - `test_acc5 = 0.9848 ± 0.0032`
+  - `test_loss = 0.4641 ± 0.0270`
+- Conclusion: keep `exp02` as showcase winner (better mean quality and lower variance).

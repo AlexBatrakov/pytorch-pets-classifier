@@ -92,6 +92,14 @@ Batch/freeze sweep for the current winner:
 ./scripts/run_experiment.sh configs/experiments/exp09_cosine_es_freeze2_s42.yaml runs/exp09_cosine_es_freeze2_s42
 ```
 
+Seed sweep for the best single-seed ablation (`exp07`, smaller batch):
+
+```bash
+./scripts/run_experiment.sh configs/experiments/exp10_cosine_es_bs16_lr15e4_s123.yaml runs/exp10_cosine_es_bs16_lr15e4_s123
+./scripts/run_experiment.sh configs/experiments/exp11_cosine_es_bs16_lr15e4_s777.yaml runs/exp11_cosine_es_bs16_lr15e4_s777
+python scripts/seed_sweep_summary.py --runs runs/exp07_cosine_es_bs16_lr15e4_s42 runs/exp10_cosine_es_bs16_lr15e4_s123 runs/exp11_cosine_es_bs16_lr15e4_s777
+```
+
 Recommended workflow:
 - Keep one high-level summary in this README.
 - Keep detailed per-run notes in `docs/experiments/*.md`.
@@ -201,6 +209,16 @@ Training command:
 
 `exp07` is the best single-seed run so far, but `exp02` stays the default showcase because it already has multi-seed robustness results.
 
+### Robustness check for `exp07` (`batch=16`, `lr=1.5e-4`, seeds `42/123/777`)
+
+| Metric | Mean ± std |
+| --- | --- |
+| test_acc1 | `0.8600 ± 0.0165` |
+| test_acc5 | `0.9848 ± 0.0032` |
+| test_loss | `0.4641 ± 0.0270` |
+
+Compared to `exp02`, this variant has a better peak single-seed score but worse average accuracy and higher variance across seeds.
+
 ![Training curves](assets/training_curves_showcase.png)
 ![Confusion matrix](assets/confusion_matrix_showcase.png)
 
@@ -210,6 +228,7 @@ Training command:
 - With `patience=6`, early stopping avoids stopping too early and captures late improvements.
 - Smaller batch (`16`) improved single-seed quality, while larger batch (`64`) degraded quality.
 - Freezing backbone for 2 epochs hurts quality in this setup.
+- The `batch=16` variant is less stable across seeds than the default `batch=32` cosine setup.
 
 ## Predict
 
