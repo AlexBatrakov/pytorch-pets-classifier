@@ -9,6 +9,13 @@ data:
   download: true
   image_size: 224
   eval_resize_size: 256
+  aug:
+    color_jitter:
+      enabled: false
+      brightness: 0.15
+      contrast: 0.15
+      saturation: 0.15
+      hue: 0.02
 
 train:
   epochs: 30

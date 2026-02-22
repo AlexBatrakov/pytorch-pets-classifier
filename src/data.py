@@ -18,15 +18,39 @@ def _get_image_sizes(data_cfg) -> Tuple[int, int]:
 	return image_size, eval_resize_size
 
 
-def _train_transform(image_size: int = DEFAULT_IMAGE_SIZE) -> transforms.Compose:
-	return transforms.Compose(
+def _build_color_jitter_transform(aug_cfg):
+	color_cfg = (aug_cfg or {}).get("color_jitter", {}) or {}
+	if not bool(color_cfg.get("enabled", False)):
+		return None
+
+	return transforms.ColorJitter(
+		brightness=float(color_cfg.get("brightness", 0.15)),
+		contrast=float(color_cfg.get("contrast", 0.15)),
+		saturation=float(color_cfg.get("saturation", 0.15)),
+		hue=float(color_cfg.get("hue", 0.02)),
+	)
+
+
+def _train_transform(
+	image_size: int = DEFAULT_IMAGE_SIZE,
+	aug_cfg=None,
+) -> transforms.Compose:
+	ops = [
+		transforms.RandomResizedCrop(image_size),
+		transforms.RandomHorizontalFlip(p=0.5),
+	]
+
+	color_jitter = _build_color_jitter_transform(aug_cfg)
+	if color_jitter is not None:
+		ops.append(color_jitter)
+
+	ops.extend(
 		[
-			transforms.RandomResizedCrop(image_size),
-			transforms.RandomHorizontalFlip(p=0.5),
 			transforms.ToTensor(),
 			transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 		]
 	)
+	return transforms.Compose(ops)
 
 
 def _val_transform(
@@ -60,6 +84,7 @@ def _resolve_target_type(data_dir: str, download: bool) -> str:
 def build_datasets(config) -> Tuple[Subset, Subset, List[str]]:
 	data_cfg = config["data"]
 	image_size, eval_resize_size = _get_image_sizes(data_cfg)
+	aug_cfg = data_cfg.get("aug", {}) or {}
 	seed = config.get("seed", 42)
 	data_dir = config["paths"]["data_dir"]
 	download = data_cfg.get("download", True)
@@ -89,7 +114,7 @@ def build_datasets(config) -> Tuple[Subset, Subset, List[str]]:
 		split="trainval",
 		target_types=target_type,
 		download=False,
-		transform=_train_transform(image_size=image_size),
+		transform=_train_transform(image_size=image_size, aug_cfg=aug_cfg),
 	)
 	val_ds = OxfordIIITPet(
 		root=data_dir,

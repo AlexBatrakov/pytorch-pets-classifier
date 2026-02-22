@@ -38,3 +38,24 @@ def test_image_size_can_be_parameterized_for_resolution_sweep() -> None:
 	val_tf = _val_transform(image_size=image_size, eval_resize_size=eval_resize_size)
 	assert _size_tuple(val_tf.transforms[0].size) == (384, 384)
 	assert _size_tuple(val_tf.transforms[1].size) == (320, 320)
+
+
+def test_train_transform_has_no_color_jitter_by_default() -> None:
+	train_tf = _train_transform()
+	assert not any(isinstance(t, transforms.ColorJitter) for t in train_tf.transforms)
+
+
+def test_train_transform_can_enable_color_jitter_via_aug_config() -> None:
+	train_tf = _train_transform(
+		image_size=256,
+		aug_cfg={
+			"color_jitter": {
+				"enabled": True,
+				"brightness": 0.1,
+				"contrast": 0.1,
+				"saturation": 0.1,
+				"hue": 0.0,
+			}
+		},
+	)
+	assert any(isinstance(t, transforms.ColorJitter) for t in train_tf.transforms)
