@@ -8,10 +8,20 @@ from torchvision import transforms
 from torchvision.datasets import OxfordIIITPet
 
 
-def _train_transform() -> transforms.Compose:
+DEFAULT_IMAGE_SIZE = 224
+DEFAULT_EVAL_RESIZE_SIZE = 256
+
+
+def _get_image_sizes(data_cfg) -> Tuple[int, int]:
+	image_size = int(data_cfg.get("image_size", DEFAULT_IMAGE_SIZE))
+	eval_resize_size = int(data_cfg.get("eval_resize_size", DEFAULT_EVAL_RESIZE_SIZE))
+	return image_size, eval_resize_size
+
+
+def _train_transform(image_size: int = DEFAULT_IMAGE_SIZE) -> transforms.Compose:
 	return transforms.Compose(
 		[
-			transforms.RandomResizedCrop(224),
+			transforms.RandomResizedCrop(image_size),
 			transforms.RandomHorizontalFlip(p=0.5),
 			transforms.ToTensor(),
 			transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
@@ -19,11 +29,14 @@ def _train_transform() -> transforms.Compose:
 	)
 
 
-def _val_transform() -> transforms.Compose:
+def _val_transform(
+	image_size: int = DEFAULT_IMAGE_SIZE,
+	eval_resize_size: int = DEFAULT_EVAL_RESIZE_SIZE,
+) -> transforms.Compose:
 	return transforms.Compose(
 		[
-			transforms.Resize(256),
-			transforms.CenterCrop(224),
+			transforms.Resize(eval_resize_size),
+			transforms.CenterCrop(image_size),
 			transforms.ToTensor(),
 			transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
 		]
@@ -46,6 +59,7 @@ def _resolve_target_type(data_dir: str, download: bool) -> str:
 
 def build_datasets(config) -> Tuple[Subset, Subset, List[str]]:
 	data_cfg = config["data"]
+	image_size, eval_resize_size = _get_image_sizes(data_cfg)
 	seed = config.get("seed", 42)
 	data_dir = config["paths"]["data_dir"]
 	download = data_cfg.get("download", True)
@@ -75,14 +89,14 @@ def build_datasets(config) -> Tuple[Subset, Subset, List[str]]:
 		split="trainval",
 		target_types=target_type,
 		download=False,
-		transform=_train_transform(),
+		transform=_train_transform(image_size=image_size),
 	)
 	val_ds = OxfordIIITPet(
 		root=data_dir,
 		split="trainval",
 		target_types=target_type,
 		download=False,
-		transform=_val_transform(),
+		transform=_val_transform(image_size=image_size, eval_resize_size=eval_resize_size),
 	)
 
 	train_subset = Subset(train_ds, train_idx)
@@ -115,6 +129,7 @@ def build_loaders(config):
 
 def build_test_loader(config):
 	data_cfg = config["data"]
+	image_size, eval_resize_size = _get_image_sizes(data_cfg)
 	data_dir = config["paths"]["data_dir"]
 	download = data_cfg.get("download", True)
 
@@ -133,7 +148,7 @@ def build_test_loader(config):
 		split="test",
 		target_types=target_type,
 		download=False,
-		transform=_val_transform(),
+		transform=_val_transform(image_size=image_size, eval_resize_size=eval_resize_size),
 	)
 
 	test_loader = DataLoader(

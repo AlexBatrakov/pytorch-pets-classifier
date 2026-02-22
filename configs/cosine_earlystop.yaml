@@ -7,6 +7,8 @@ data:
   pin_memory: false
   val_split: 0.2
   download: true
+  image_size: 224
+  eval_resize_size: 256
 
 train:
   epochs: 30
