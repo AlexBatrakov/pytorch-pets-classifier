@@ -1,13 +1,13 @@
 # PyTorch Pets Classifier
 [![CI](https://github.com/AlexBatrakov/pytorch-pets-classifier/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexBatrakov/pytorch-pets-classifier/actions/workflows/ci.yml)
 
-Showcase pet project for image classification on **Oxford-IIIT Pets (37 breeds)** using **PyTorch + torchvision (ResNet18 transfer learning)**.
+Showcase **Data Science / ML** pet project for fine-grained image classification on **Oxford-IIIT Pets (37 breeds)** using **PyTorch + torchvision (ResNet18 transfer learning)**.
 
-The goal of this repo is not only to train a model, but to demonstrate:
+The goal of this repo is not only to train a model, but to demonstrate an evidence-based DS workflow:
 - a clean PyTorch training/evaluation pipeline,
-- experiment tracking and comparison,
+- experiment design, tracking, and comparison,
 - robust model selection (seed sweeps, not only single-seed peaks),
-- error analysis with plots and visual examples,
+- structured error analysis with plots, visual examples, and hypotheses,
 - tests + CI for core pipeline behavior.
 
 ## Results Snapshot
@@ -72,6 +72,19 @@ Key findings from the `test` split:
 - Main weakness is fine-grained class ranking/separation
 
 ![Overconfident mistakes gallery](docs/experiments/assets/exp02_error_gallery.png)
+
+## What I Would Do Next (DS Perspective)
+
+These are the next steps I would prioritize **for this project**, based on the current error analysis:
+
+- **Targeted augmentation for fine-grained confusions**  
+  The main errors are concentrated in visually similar breeds (for example `APBT <-> Staffordshire Bull Terrier`, `Birman <-> Ragdoll`), so I would test stronger crop/scale and lighting augmentations.
+
+- **Stronger backbone in a controlled comparison**  
+  Since top-5 is high while top-1 still fails on near-neighbor classes, I would run a controlled comparison with a stronger backbone (for example `ResNet34` / `EfficientNet`) using the same evaluation protocol and seed sweep.
+
+- **Confidence calibration / uncertainty analysis**  
+  The model makes overconfident mistakes, so I would add reliability diagrams and temperature scaling to improve confidence interpretability.
 
 ## Quickstart
 
@@ -189,8 +202,19 @@ assets/               showcase images used in root README
 
 ## Roadmap
 
+### Modeling / Research
+
 - Grad-CAM visualization
+- Stronger backbone experiments (ResNet34 / EfficientNet)
+- Targeted augmentations for hard breed pairs
+- Confidence calibration (reliability diagram / temperature scaling)
+
+### Training / Experimentation
+
 - AMP training
 - Optuna hyperparameter search
 - Weights & Biases logging
+
+### Deployment / Interop
+
 - ONNX export
