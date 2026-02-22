@@ -27,6 +27,7 @@ Use one file per experiment when you want to keep details (settings, metrics, no
 - Isolated step+ES run template: `docs/experiments/exp04_step_es_e30_s42.md`.
 - Seed robustness page for cosine winner: `docs/experiments/seed_sweep_cosine.md`.
 - Seed robustness page for small-batch cosine variant: `docs/experiments/seed_sweep_cosine_bs16.md`.
+- Error analysis report for showcase winner: `docs/experiments/error_analysis_exp02.md`.
 - Batch-size sweep run templates: `exp07` (`bs16`) and `exp08` (`bs64`).
 - Freeze strategy run template: `exp09` (`freeze_epochs=2`).
 - Each experiment page includes embedded training curves and confusion matrix images.
