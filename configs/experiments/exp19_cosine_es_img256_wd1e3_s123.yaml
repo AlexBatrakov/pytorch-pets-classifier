@@ -1,0 +1,35 @@
+seed: 123
+deterministic: false
+
+data:
+  batch_size: 32
+  num_workers: 0
+  pin_memory: false
+  val_split: 0.2
+  download: true
+  image_size: 256
+  eval_resize_size: 292
+
+train:
+  epochs: 30
+  lr: 0.0003
+  weight_decay: 0.001
+  freeze_backbone: false
+  freeze_epochs: 0
+  scheduler:
+    name: cosine
+    t_max: 30
+  early_stopping:
+    enabled: true
+    monitor: val_acc1
+    mode: max
+    patience: 6
+    min_delta: 0.001
+
+logging:
+  print_every: 50
+
+paths:
+  data_dir: ./data
+  checkpoints_dir: ./runs/exp19_cosine_es_img256_wd1e3_s123/checkpoints
+  artifacts_dir: ./runs/exp19_cosine_es_img256_wd1e3_s123/artifacts
