@@ -1,10 +1,10 @@
 # Error Analysis: `exp02_cosine_es_e30_s42` (test split)
 
 ## Goal
-Understand **where** the showcase model fails (`test_acc1 ~ 0.875`) and what these failures suggest about the next improvements.
+Understand **where** the previous showcase model fails (`test_acc1 ~ 0.875`) and what these failures suggest about the next improvements.
 
 ## Scope
-- Model: `exp02_cosine_es_e30_s42` (current showcase winner)
+- Model: `exp02_cosine_es_e30_s42` (previous showcase winner / reference baseline)
 - Split: `test`
 - Source artifacts:
   - `predictions_test.csv`

@@ -15,33 +15,36 @@ The goal of this repo is not only to train a model, but to demonstrate an eviden
 ## Results Snapshot
 
 ### Final showcase model
-- **Chosen model:** `exp02_cosine_es_e30_s42` (ResNet18 + cosine scheduler + early stopping)
-- **Why this one:** better **3-seed mean ± std** than alternatives; selected for robustness, not cherry-picked peak score
+- **Chosen model:** `exp17_cosine_es_img256_wd1e3_s42` (ResNet18 + cosine + early stopping + `img256` + `wd=1e-3`)
+- **Why this one:** won a controlled Group A-short screening (resolution + `weight_decay`) and then improved the **3-seed mean ± std** versus the previous showcase recipe
 
 ### Metrics (best checkpoint)
 
 | Split | loss | acc@1 | acc@5 |
 | --- | --- | --- | --- |
-| Val | 0.2890 | 0.914 | 0.988 |
-| Test | 0.4570 | 0.875 | 0.984 |
+| Val | 0.2918 | 0.925 | 0.992 |
+| Test | 0.4292 | 0.881 | 0.985 |
 
 ### Robustness (seeds `42/123/777`) for showcase setup
 
 | Metric | Mean ± std |
 | --- | --- |
-| test_acc1 | `0.8717 ± 0.0059` |
-| test_acc5 | `0.9830 ± 0.0014` |
-| test_loss | `0.4551 ± 0.0160` |
+| test_acc1 | `0.8829 ± 0.0015` |
+| test_acc5 | `0.9854 ± 0.0014` |
+| test_loss | `0.4159 ± 0.0158` |
 
 ### Key takeaways
-- Cosine LR + early stopping improved the baseline and generalized better on `test`.
-- A smaller batch (`exp07`, `batch=16`) produced a better **single-seed** peak, but was less stable across seeds.
-- Error analysis shows the main weakness is **fine-grained breed separation**, not complete feature failure.
+- A controlled Group A-short cycle (resolution -> `weight_decay` -> one augmentation test) improved the showcase recipe **without changing the backbone**.
+- `img256 + wd=1e-3` improved both mean `test_acc1` and run-to-run stability vs the previous cosine showcase setup.
+- A mild `ColorJitter` test was a useful negative result (it hurt accuracy), which helped avoid blind augmentation tuning.
+- Error analysis still indicates the main weakness is **fine-grained breed separation**, not complete feature failure.
 
 ### Showcase visuals
 
 ![Training curves](assets/training_curves_showcase.png)
 ![Error analysis: top confusion pairs](docs/experiments/assets/exp02_error_confusion_top_pairs.png)
+
+Note: the confusion-pair plot is from the detailed `exp02` error analysis (still informative); a refreshed error analysis for the new showcase recipe is a planned follow-up.
 
 ## How Final Model Was Chosen
 
@@ -53,16 +56,23 @@ Selection rules used in this project:
 - **Use test metrics transparently:** reported for comparison and final justification
 
 Final decision:
-- `exp07` (`batch=16`) achieved the best **single-seed** `test_acc1` (`0.877`)
-- `exp02` (`batch=32`) achieved better **3-seed average** and much lower variance
-- therefore `exp02` is the main showcase model
+- `exp07` (`batch=16`) achieved a strong **single-seed** result, but was less stable across seeds
+- Group A-short then tested a controlled set of low-risk recipe changes on `ResNet18`:
+  - resolution sweep (`224/256/320`)
+  - `weight_decay` sweep on the best resolution
+  - one augmentation recipe (`ColorJitter`, rejected)
+- `exp17` (`img256 + wd=1e-3`) became the best screening candidate and was confirmed on seeds `42/123/777`
+- the `exp17` recipe improved mean `test_acc1` and reduced variance vs the previous `exp02` showcase recipe
+- therefore the `exp17` recipe is the current showcase model
 
 Details:
 - Experiment index: [docs/experiments/README.md](docs/experiments/README.md)
-- Cosine winner seed sweep: [docs/experiments/seed_sweep_cosine.md](docs/experiments/seed_sweep_cosine.md)
+- Group A-short screening summary: [docs/experiments/group_a_short_resolution_wd_aug.md](docs/experiments/group_a_short_resolution_wd_aug.md)
+- Current showcase seed sweep (`exp17` recipe): [docs/experiments/seed_sweep_img256_wd1e3.md](docs/experiments/seed_sweep_img256_wd1e3.md)
+- Previous cosine winner seed sweep (`exp02` recipe): [docs/experiments/seed_sweep_cosine.md](docs/experiments/seed_sweep_cosine.md)
 - Small-batch seed sweep (`exp07`): [docs/experiments/seed_sweep_cosine_bs16.md](docs/experiments/seed_sweep_cosine_bs16.md)
 
-## Error Analysis (Showcase Model `exp02`)
+## Error Analysis (Detailed Report Currently on `exp02`)
 
 Detailed report:
 - [docs/experiments/error_analysis_exp02.md](docs/experiments/error_analysis_exp02.md)
@@ -73,20 +83,28 @@ Key findings from the `test` split:
 - A subset of mistakes is overconfident (`20.4%` of errors have confidence `>= 0.90`)
 - Main weakness is fine-grained class ranking/separation
 
+Why this section is still relevant:
+- the new showcase recipe (`exp17`) improves the training recipe, but keeps the same backbone family (`ResNet18`)
+- so the `exp02` error modes are still a useful guide for next-step hypotheses
+- a refreshed error analysis for the new showcase recipe is the next documentation/analysis upgrade
+
 ![Overconfident mistakes gallery](docs/experiments/assets/exp02_error_gallery.png)
 
 ## What I Would Do Next (DS Perspective)
 
-These are the next steps I would prioritize **for this project**, based on the current error analysis:
+These are the next steps I would prioritize **now that Group A-short is complete**:
 
-- **Targeted augmentation for fine-grained confusions**  
-  The main errors are concentrated in visually similar breeds (for example `APBT <-> Staffordshire Bull Terrier`, `Birman <-> Ragdoll`), so I would test stronger crop/scale and lighting augmentations.
+- **Refresh error analysis for the new showcase recipe (`exp17`)**  
+  Re-run the same analysis workflow to confirm whether the improved recipe changes which classes/pairs dominate the remaining errors.
+
+- **Confidence calibration / uncertainty analysis (Group C)**  
+  The model makes overconfident mistakes, so adding reliability diagrams and temperature scaling would deepen the portfolio story beyond raw accuracy.
+
+- **Targeted augmentation for fine-grained confusions (later Group A / B bridge)**  
+  The `ColorJitter` negative result suggests we should be more selective and error-driven (for example crop/scale robustness for specific confusion pairs) rather than broadly increasing augmentation strength.
 
 - **Stronger backbone in a controlled comparison**  
   Since top-5 is high while top-1 still fails on near-neighbor classes, I would run a controlled comparison with a stronger backbone (for example `ResNet34` / `EfficientNet`) using the same evaluation protocol and seed sweep.
-
-- **Confidence calibration / uncertainty analysis**  
-  The model makes overconfident mistakes, so I would add reliability diagrams and temperature scaling to improve confidence interpretability.
 
 ## Quickstart
 
@@ -146,13 +164,13 @@ Test scope:
 - Integration: metrics CSV writing, training-curves plotting
 - Smoke: imports and basic model/dataset construction
 
-## Reproduce Showcase Experiment (`exp02`)
+## Reproduce Showcase Experiment (`exp17`)
 
 Use isolated run folders to avoid overwriting `best.pt`, `last.pt`, and `metrics.csv`.
 
 ```bash
 source .venv/bin/activate
-./scripts/run_experiment.sh configs/experiments/exp02_cosine_es_e30_s42.yaml runs/exp02_cosine_es_e30_s42
+./scripts/run_experiment.sh configs/experiments/exp17_cosine_es_img256_wd1e3_s42.yaml runs/exp17_cosine_es_img256_wd1e3_s42
 ```
 
 Notes:
@@ -161,20 +179,23 @@ Notes:
 - the script trains, evaluates on `val` and `test`, exports confusion matrix, and builds training curves
 
 Related docs:
-- Showcase experiment page: [docs/experiments/exp02_cosine_es_e30_s42.md](docs/experiments/exp02_cosine_es_e30_s42.md)
+- Showcase experiment page: [docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
+- Group A-short summary: [docs/experiments/group_a_short_resolution_wd_aug.md](docs/experiments/group_a_short_resolution_wd_aug.md)
 - Full experiment catalog: [docs/experiments/README.md](docs/experiments/README.md)
 
 ## Experiment Navigation
 
 Start here:
 - [Experiment index and comparison table](docs/experiments/README.md)
-- [Showcase experiment (`exp02`)](docs/experiments/exp02_cosine_es_e30_s42.md)
-- [Error analysis report (`exp02`)](docs/experiments/error_analysis_exp02.md)
+- [Showcase experiment (`exp17`)](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
+- [Group A-short summary (resolution / weight decay / augmentation)](docs/experiments/group_a_short_resolution_wd_aug.md)
+- [Seed sweep for current showcase recipe (`exp17`, seeds `42/123/777`)](docs/experiments/seed_sweep_img256_wd1e3.md)
+- [Error analysis report (`exp02`, detailed baseline analysis)](docs/experiments/error_analysis_exp02.md)
 
 Supporting runs:
 - [Baseline (`exp01`)](docs/experiments/exp01_baseline_e15_s42.md)
 - [Scheduler sweep pages / configs summary](docs/experiments/README.md)
-- [Cosine seed sweep (`exp02`, seeds `42/123/777`)](docs/experiments/seed_sweep_cosine.md)
+- [Previous cosine showcase seed sweep (`exp02`, seeds `42/123/777`)](docs/experiments/seed_sweep_cosine.md)
 - [Small-batch seed sweep (`exp07`, seeds `42/123/777`)](docs/experiments/seed_sweep_cosine_bs16.md)
 
 ## Project Structure
