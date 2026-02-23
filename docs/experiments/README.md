@@ -1,12 +1,13 @@
 # Experiments Index
 
-This folder contains the experiment log for the project: individual run pages, sweep summaries, and error analysis artifacts.
+This folder contains the experiment log for the project: individual run pages, sweep summaries, and error analysis artifacts (for current and historical showcase recipes).
 
 Use this page as the main navigation hub for all experiment-related materials.
 
 ## Start Here
 
 - [Current showcase experiment (`exp17`: `img256` + `wd=1e-3`)](exp17_cosine_es_img256_wd1e3_s42.md)
+- [Error analysis for current showcase model (`exp17`)](error_analysis_exp17.md)
 - [Group A-short summary (resolution / weight decay / augmentation screening)](group_a_short_resolution_wd_aug.md)
 - [Seed sweep for current showcase setup (`exp17`, seeds `42/123/777`)](seed_sweep_img256_wd1e3.md)
 - [Error analysis for previous showcase model (`exp02`)](error_analysis_exp02.md)

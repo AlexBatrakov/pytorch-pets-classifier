@@ -42,9 +42,7 @@ The goal of this repo is not only to train a model, but to demonstrate an eviden
 ### Showcase visuals
 
 ![Training curves](assets/training_curves_showcase.png)
-![Error analysis: top confusion pairs](docs/experiments/assets/exp02_error_confusion_top_pairs.png)
-
-Note: the confusion-pair plot is from the detailed `exp02` error analysis (still informative); a refreshed error analysis for the new showcase recipe is a planned follow-up.
+![Error analysis: top confusion pairs](docs/experiments/assets/exp17_error_confusion_top_pairs.png)
 
 ## How Final Model Was Chosen
 
@@ -72,33 +70,31 @@ Details:
 - Previous cosine winner seed sweep (`exp02` recipe): [docs/experiments/seed_sweep_cosine.md](docs/experiments/seed_sweep_cosine.md)
 - Small-batch seed sweep (`exp07`): [docs/experiments/seed_sweep_cosine_bs16.md](docs/experiments/seed_sweep_cosine_bs16.md)
 
-## Error Analysis (Detailed Report Currently on `exp02`)
+## Error Analysis (Showcase Model `exp17`)
 
 Detailed report:
-- [docs/experiments/error_analysis_exp02.md](docs/experiments/error_analysis_exp02.md)
+- [docs/experiments/error_analysis_exp17.md](docs/experiments/error_analysis_exp17.md)
 
 Key findings from the `test` split:
-- Errors are concentrated in visually similar breeds (`American Pit Bull Terrier <-> Staffordshire Bull Terrier`, `Birman <-> Ragdoll`, `Basset Hound -> Beagle`)
-- `460` top-1 errors were made, but `402` (`87.4%`) still contain the true class in top-5
-- A subset of mistakes is overconfident (`20.4%` of errors have confidence `>= 0.90`)
-- Main weakness is fine-grained class ranking/separation
+- Errors are still concentrated in visually similar breeds (`American Pit Bull Terrier`, `Staffordshire Bull Terrier`, `Ragdoll`, `Basset Hound`, `Birman`)
+- `436` top-1 errors were made, but `381` (`87.4%`) still contain the true class in top-5
+- Overconfident mistakes still exist, but their frequency decreased vs `exp02` (for example `>= 0.90` confidence errors: `17.9%` vs `20.4%`)
+- Main weakness remains fine-grained class ranking/separation, especially in a few hard breed clusters
 
-Why this section is still relevant:
-- the new showcase recipe (`exp17`) improves the training recipe, but keeps the same backbone family (`ResNet18`)
-- so the `exp02` error modes are still a useful guide for next-step hypotheses
-- a refreshed error analysis for the new showcase recipe is the next documentation/analysis upgrade
+Historical reference:
+- Previous showcase error analysis (`exp02`): [docs/experiments/error_analysis_exp02.md](docs/experiments/error_analysis_exp02.md)
 
-![Overconfident mistakes gallery](docs/experiments/assets/exp02_error_gallery.png)
+![Overconfident mistakes gallery](docs/experiments/assets/exp17_error_gallery.png)
 
 ## What I Would Do Next (DS Perspective)
 
-These are the next steps I would prioritize **now that Group A-short is complete**:
-
-- **Refresh error analysis for the new showcase recipe (`exp17`)**  
-  Re-run the same analysis workflow to confirm whether the improved recipe changes which classes/pairs dominate the remaining errors.
+These are the next steps I would prioritize **after completing Group A-short and refreshing error analysis for `exp17`**:
 
 - **Confidence calibration / uncertainty analysis (Group C)**  
-  The model makes overconfident mistakes, so adding reliability diagrams and temperature scaling would deepen the portfolio story beyond raw accuracy.
+  The model still makes overconfident mistakes, so adding reliability diagrams and temperature scaling would deepen the portfolio story beyond raw accuracy.
+
+- **Error-delta comparison (`exp17` vs `exp02`) with a short write-up**  
+  The new analysis shows uneven gains across classes (for example improvements on `Birman` / `Staffordshire Bull Terrier`, but regression on `American Pit Bull Terrier`), which is useful material for a strong DS narrative.
 
 - **Targeted augmentation for fine-grained confusions (later Group A / B bridge)**  
   The `ColorJitter` negative result suggests we should be more selective and error-driven (for example crop/scale robustness for specific confusion pairs) rather than broadly increasing augmentation strength.
@@ -188,9 +184,10 @@ Related docs:
 Start here:
 - [Experiment index and comparison table](docs/experiments/README.md)
 - [Showcase experiment (`exp17`)](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
+- [Error analysis report (`exp17`, current showcase)](docs/experiments/error_analysis_exp17.md)
 - [Group A-short summary (resolution / weight decay / augmentation)](docs/experiments/group_a_short_resolution_wd_aug.md)
 - [Seed sweep for current showcase recipe (`exp17`, seeds `42/123/777`)](docs/experiments/seed_sweep_img256_wd1e3.md)
-- [Error analysis report (`exp02`, detailed baseline analysis)](docs/experiments/error_analysis_exp02.md)
+- [Error analysis report (`exp02`, historical reference)](docs/experiments/error_analysis_exp02.md)
 
 Supporting runs:
 - [Baseline (`exp01`)](docs/experiments/exp01_baseline_e15_s42.md)
