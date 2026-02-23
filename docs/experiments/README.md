@@ -28,12 +28,63 @@ Ablations:
 - [exp07: cosine + ES, `batch=16`, `lr=1.5e-4`, seed 42](exp07_cosine_es_bs16_lr15e4_s42.md)
 - [exp08: cosine + ES, `batch=64`, `lr=6e-4`, seed 42](exp08_cosine_es_bs64_lr6e4_s42.md)
 - [exp09: cosine + ES, `freeze_backbone=true`, `freeze_epochs=2`, seed 42](exp09_cosine_es_freeze2_s42.md)
+- [exp18: cosine + ES, `img256`, `wd=1e-3`, mild `ColorJitter` (negative result), seed 42](exp18_cosine_es_img256_wd1e3_cj_s42.md)
 - [Group A-short summary (`exp12`-`exp18`: resolution, weight decay, one augmentation test)](group_a_short_resolution_wd_aug.md)
 
 Seed-sweep support runs (used by sweep pages):
 - `exp05`, `exp06` for `exp02` cosine robustness
 - `exp10`, `exp11` for `exp07` small-batch robustness
 - `exp19`, `exp20` for `exp17` (`img256`, `wd=1e-3`) robustness
+
+## Documentation Coverage Policy
+
+Not every experiment config has its own standalone markdown page. This is intentional.
+
+Coverage levels used in this repo:
+- **Full experiment page**: milestone runs and primary comparisons (for example `exp01`, `exp02`, `exp17`)
+- **Ablation / negative-result page**: selected non-winning runs worth documenting for interpretability (for example `exp18`)
+- **Summary page**: compact screening batches documented as one hypothesis-driven block (for example Group A-short `exp12`-`exp18`)
+- **Seed-sweep page**: support runs documented as part of robustness analysis (for example `exp05/06`, `exp10/11`, `exp19/20`)
+- **Comparison table**: all tracked runs that materially support conclusions should appear in the table below (including seed-support runs when metrics are used in comparisons)
+
+If a config is not listed as a standalone page, check:
+- the Group A-short summary page
+- the relevant seed-sweep page
+- the comparison table
+
+## Coverage Matrix
+
+This table shows where each experiment is documented.
+
+Legend:
+- `Page` = standalone experiment page (`docs/experiments/expXX_*.md`)
+- `Summary` = grouped summary page (for example Group A-short)
+- `Sweep` = seed-sweep page
+- `Table` = comparison table below
+
+| Experiment | Page | Summary | Sweep | Table | Primary documentation location |
+| --- | --- | --- | --- | --- | --- |
+| `exp01` | Yes | - | - | Yes | `exp01_baseline_e15_s42.md` |
+| `exp02` | Yes | - | Yes | Yes | `exp02_cosine_es_e30_s42.md`, `seed_sweep_cosine.md`, `error_analysis_exp02.md` |
+| `exp03` | Yes | - | - | Yes | `exp03_plateau_es_e30_s42.md` |
+| `exp03b` | Yes | - | - | Yes | `exp03b_plateau_noes_e30_s42.md` |
+| `exp04` | Yes | - | - | Yes | `exp04_step_es_e30_s42.md` |
+| `exp05` | - | - | Yes | Yes | `seed_sweep_cosine.md` |
+| `exp06` | - | - | Yes | Yes | `seed_sweep_cosine.md` |
+| `exp07` | Yes | - | Yes | Yes | `exp07_cosine_es_bs16_lr15e4_s42.md`, `seed_sweep_cosine_bs16.md` |
+| `exp08` | Yes | - | - | Yes | `exp08_cosine_es_bs64_lr6e4_s42.md` |
+| `exp09` | Yes | - | - | Yes | `exp09_cosine_es_freeze2_s42.md` |
+| `exp10` | - | - | Yes | Yes | `seed_sweep_cosine_bs16.md` |
+| `exp11` | - | - | Yes | Yes | `seed_sweep_cosine_bs16.md` |
+| `exp12` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
+| `exp13` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
+| `exp14` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
+| `exp15` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
+| `exp16` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
+| `exp17` | Yes | Yes | Yes | Yes | `exp17_cosine_es_img256_wd1e3_s42.md`, `seed_sweep_img256_wd1e3.md`, `error_analysis_exp17.md` |
+| `exp18` | Yes | Yes | - | Yes | `exp18_cosine_es_img256_wd1e3_cj_s42.md`, `group_a_short_resolution_wd_aug.md` |
+| `exp19` | - | - | Yes | Yes | `seed_sweep_img256_wd1e3.md` |
+| `exp20` | - | - | Yes | Yes | `seed_sweep_img256_wd1e3.md` |
 
 ## Reproduction Workflow (short)
 
@@ -62,6 +113,8 @@ python scripts/seed_sweep_summary.py --runs runs/<run1> runs/<run2> runs/<run3>
 | `exp03_plateau_es_e30_s42` | `configs/experiments/exp03_plateau_es_e30_s42.yaml` | 12 | 18 (early stop) | `0.3341 / 0.906 / 0.989` | `0.4906 / 0.852 / 0.982` |
 | `exp03b_plateau_noes_e30_s42` | `configs/experiments/exp03b_plateau_noes_e30_s42.yaml` | 21 | 30 | `0.3322 / 0.908 / 0.989` | `0.4864 / 0.859 / 0.981` |
 | `exp04_step_es_e30_s42` | `configs/experiments/exp04_step_es_e30_s42.yaml` | 13 | 19 (early stop) | `0.3416 / 0.909 / 0.989` | `0.4977 / 0.851 / 0.982` |
+| `exp05_cosine_es_e30_s123` | `configs/experiments/exp05_cosine_es_e30_s123.yaml` | 21 | 27 (early stop) | `0.3033 / 0.909 / 0.993` | `0.4383 / 0.875 / 0.981` |
+| `exp06_cosine_es_e30_s777` | `configs/experiments/exp06_cosine_es_e30_s777.yaml` | 23 | 29 (early stop) | `0.3349 / 0.904 / 0.986` | `0.4701 / 0.865 / 0.984` |
 | `exp07_cosine_es_bs16_lr15e4_s42` | `configs/experiments/exp07_cosine_es_bs16_lr15e4_s42.yaml` | 17 | 23 (early stop) | `0.2934 / 0.910 / 0.990` | `0.4405 / 0.877 / 0.983` |
 | `exp08_cosine_es_bs64_lr6e4_s42` | `configs/experiments/exp08_cosine_es_bs64_lr6e4_s42.yaml` | 22 | 28 (early stop) | `0.3335 / 0.902 / 0.993` | `0.5044 / 0.857 / 0.978` |
 | `exp09_cosine_es_freeze2_s42` | `configs/experiments/exp09_cosine_es_freeze2_s42.yaml` | 11 | 17 (early stop) | `0.4156 / 0.886 / 0.985` | `0.5968 / 0.826 / 0.974` |
