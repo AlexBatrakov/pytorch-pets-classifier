@@ -12,6 +12,21 @@ The goal of this repo is not only to train a model, but to demonstrate an eviden
 - structured error analysis with plots, visual examples, and hypotheses,
 - tests + CI for core pipeline behavior.
 
+## At A Glance (For Recruiters / Reviewers)
+
+What this project demonstrates:
+- **Applied ML experimentation discipline**: controlled ablations, seed sweeps, explicit model-selection rules
+- **Evidence-based iteration**: error analysis -> hypothesis -> screening -> robustness follow-up
+- **Reproducibility + engineering hygiene**: isolated runs, experiment docs, tests + CI
+- **Honest reporting**: documented negative results (for example rejected `ColorJitter` recipe), not only wins
+
+Fastest way to review the project (2-3 minutes):
+- [Experiment index + comparison table](docs/experiments/README.md)
+- [Current showcase experiment (`exp17`)](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
+- [3-seed robustness summary for current showcase recipe](docs/experiments/seed_sweep_img256_wd1e3.md)
+- [Error analysis for current showcase model (`exp17`)](docs/experiments/error_analysis_exp17.md)
+- [Group A-short improvement cycle summary](docs/experiments/group_a_short_resolution_wd_aug.md)
+
 ## Results Snapshot
 
 ### Final showcase model
@@ -39,12 +54,17 @@ The goal of this repo is not only to train a model, but to demonstrate an eviden
 - A mild `ColorJitter` test was a useful negative result (it hurt accuracy), which helped avoid blind augmentation tuning.
 - Error analysis still indicates the main weakness is **fine-grained breed separation**, not complete feature failure.
 
+### Why this is a strong portfolio result (not just a score)
+- The final recipe was selected by **robustness (`mean ± std`)**, not a cherry-picked single run.
+- Improvements were tested **one axis at a time** (resolution -> `weight_decay` -> one augmentation).
+- The repo preserves the full reasoning trail: experiment table, seed sweeps, error analysis, and negative-result documentation.
+
 ### Showcase visuals
 
 ![Training curves](assets/training_curves_showcase.png)
 ![Error analysis: top confusion pairs](docs/experiments/assets/exp17_error_confusion_top_pairs.png)
 
-## How Final Model Was Chosen
+## Model Selection (Robustness-First)
 
 Selection rules used in this project:
 - **Within one run:** save `best.pt` by highest `val_acc1` (early stopping also monitors `val_acc1`)
@@ -86,21 +106,18 @@ Historical reference:
 
 ![Overconfident mistakes gallery](docs/experiments/assets/exp17_error_gallery.png)
 
-## What I Would Do Next (DS Perspective)
+## Next Steps (Planned, Optional Reading)
 
-These are the next steps I would prioritize **after completing Group A-short and refreshing error analysis for `exp17`**:
+Priority sequence after the current showcase update:
 
-- **Confidence calibration / uncertainty analysis (Group C)**  
-  The model still makes overconfident mistakes, so adding reliability diagrams and temperature scaling would deepen the portfolio story beyond raw accuracy.
+- **Calibration / uncertainty analysis (Group C)**  
+  Add a reliability diagram + temperature scaling for `exp17` to strengthen the trustworthiness story.
 
-- **Error-delta comparison (`exp17` vs `exp02`) with a short write-up**  
-  The new analysis shows uneven gains across classes (for example improvements on `Birman` / `Staffordshire Bull Terrier`, but regression on `American Pit Bull Terrier`), which is useful material for a strong DS narrative.
+- **Short error-delta write-up (`exp17` vs `exp02`)**  
+  Summarize where the new recipe improved (and regressed) by class/confusion pair.
 
-- **Targeted augmentation for fine-grained confusions (later Group A / B bridge)**  
-  The `ColorJitter` negative result suggests we should be more selective and error-driven (for example crop/scale robustness for specific confusion pairs) rather than broadly increasing augmentation strength.
-
-- **Stronger backbone in a controlled comparison**  
-  Since top-5 is high while top-1 still fails on near-neighbor classes, I would run a controlled comparison with a stronger backbone (for example `ResNet34` / `EfficientNet`) using the same evaluation protocol and seed sweep.
+- **One controlled backbone upgrade (Group B)**  
+  Compare `ResNet18` vs `ResNet34/ResNet50` under the same evaluation protocol and seed-based validation.
 
 ## Quickstart
 
