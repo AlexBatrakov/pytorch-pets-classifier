@@ -152,15 +152,7 @@ jobs:
         run: |
           for attempt in $(seq 1 24); do
             if curl -fsS "${{ steps.live.outputs.base_url }}/health" -o /tmp/health.json; then
-              python - <<'PY'
-              import json
-              from pathlib import Path
-
-              payload = json.loads(Path("/tmp/health.json").read_text())
-              assert payload["status"] == "ok", payload
-              assert payload["model_version"] == "${{ steps.manifest.outputs.model_version }}", payload
-              print(payload)
-              PY
+              python -c "import json; from pathlib import Path; payload = json.loads(Path('/tmp/health.json').read_text()); assert payload['status'] == 'ok', payload; assert payload['model_version'] == '${{ steps.manifest.outputs.model_version }}', payload; print(payload)"
               exit 0
             fi
 
