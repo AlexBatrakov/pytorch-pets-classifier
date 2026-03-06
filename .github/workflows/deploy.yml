@@ -1,0 +1,232 @@
+name: Deploy
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build And Deploy To Azure Container Apps
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    environment: production
+
+    env:
+      MODEL_MANIFEST_PATH: deploy/showcase_model.json
+      IMAGE_REPOSITORY: pytorch-pets-api
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Resolve delivery metadata
+        id: manifest
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          manifest_path = Path(os.environ["MODEL_MANIFEST_PATH"])
+          data = json.loads(manifest_path.read_text())
+
+          outputs = {
+              "model_version": data["model_version"],
+              "release_tag": data["release_tag"],
+              "asset_name": data["asset_name"],
+              "download_url": data["download_url"],
+              "sha256": data["sha256"],
+              "size_bytes": str(data["size_bytes"]),
+              "local_source_path": data["local_source_path"],
+              "container_model_path": data["container_model_path"],
+          }
+
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as fh:
+              for key, value in outputs.items():
+                  fh.write(f"{key}={value}\n")
+          PY
+
+      - name: Download pinned showcase checkpoint
+        shell: bash
+        run: |
+          mkdir -p "$(dirname "${{ steps.manifest.outputs.local_source_path }}")"
+          curl -fsSL "${{ steps.manifest.outputs.download_url }}" -o "${{ steps.manifest.outputs.local_source_path }}"
+
+      - name: Verify showcase checkpoint checksum
+        shell: bash
+        run: |
+          actual_size="$(stat -c %s "${{ steps.manifest.outputs.local_source_path }}")"
+          test "$actual_size" = "${{ steps.manifest.outputs.size_bytes }}"
+          echo "${{ steps.manifest.outputs.sha256 }}  ${{ steps.manifest.outputs.local_source_path }}" | sha256sum --check --
+
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+      - name: Install Container Apps CLI extension
+        shell: bash
+        run: az extension add --name containerapp --upgrade --allow-preview true
+
+      - name: Compute image URI
+        id: image
+        shell: bash
+        run: |
+          image_tag="sha-${GITHUB_SHA}"
+          image_uri="${{ vars.AZURE_ACR_LOGIN_SERVER }}/${IMAGE_REPOSITORY}:${image_tag}"
+
+          {
+            echo "image_tag=${image_tag}"
+            echo "image_uri=${image_uri}"
+          } >> "${GITHUB_OUTPUT}"
+
+      - name: Log in to Azure Container Registry
+        shell: bash
+        run: az acr login --name "${{ vars.AZURE_ACR_NAME }}"
+
+      - name: Build Docker image
+        shell: bash
+        run: docker build --platform linux/amd64 -t "${{ steps.image.outputs.image_uri }}" .
+
+      - name: Push Docker image
+        shell: bash
+        run: docker push "${{ steps.image.outputs.image_uri }}"
+
+      - name: Update Azure Container App
+        id: deploy
+        shell: bash
+        run: |
+          latest_revision="$(
+            az containerapp update \
+              --name "${{ vars.AZURE_CONTAINER_APP_NAME }}" \
+              --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" \
+              --image "${{ steps.image.outputs.image_uri }}" \
+              --set-env-vars \
+                MODEL_VERSION="${{ steps.manifest.outputs.model_version }}" \
+                MODEL_PATH="${{ steps.manifest.outputs.container_model_path }}" \
+                DEVICE=cpu \
+              --query properties.latestRevisionName \
+              -o tsv
+          )"
+
+          echo "latest_revision=${latest_revision}" >> "${GITHUB_OUTPUT}"
+
+      - name: Wait for latest revision to become ready
+        shell: bash
+        run: |
+          for attempt in $(seq 1 30); do
+            latest_revision="$(az containerapp show --name "${{ vars.AZURE_CONTAINER_APP_NAME }}" --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" --query properties.latestRevisionName -o tsv)"
+            ready_revision="$(az containerapp show --name "${{ vars.AZURE_CONTAINER_APP_NAME }}" --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" --query properties.latestReadyRevisionName -o tsv)"
+
+            if [ -n "$latest_revision" ] && [ "$latest_revision" = "$ready_revision" ]; then
+              echo "Ready revision: $ready_revision"
+              exit 0
+            fi
+
+            echo "Waiting for ready revision (${attempt}/30): latest=$latest_revision ready=$ready_revision"
+            sleep 10
+          done
+
+          echo "Timed out waiting for the latest revision to become ready." >&2
+          exit 1
+
+      - name: Resolve live URL
+        id: live
+        shell: bash
+        run: |
+          fqdn="$(az containerapp show --name "${{ vars.AZURE_CONTAINER_APP_NAME }}" --resource-group "${{ vars.AZURE_RESOURCE_GROUP }}" --query properties.configuration.ingress.fqdn -o tsv)"
+          echo "base_url=https://${fqdn}" >> "${GITHUB_OUTPUT}"
+
+      - name: Smoke check health endpoint
+        shell: bash
+        run: |
+          for attempt in $(seq 1 24); do
+            if curl -fsS "${{ steps.live.outputs.base_url }}/health" -o /tmp/health.json; then
+              python - <<'PY'
+              import json
+              from pathlib import Path
+
+              payload = json.loads(Path("/tmp/health.json").read_text())
+              assert payload["status"] == "ok", payload
+              assert payload["model_version"] == "${{ steps.manifest.outputs.model_version }}", payload
+              print(payload)
+              PY
+              exit 0
+            fi
+
+            echo "Health check retry ${attempt}/24"
+            sleep 10
+          done
+
+          echo "Health endpoint did not become ready in time." >&2
+          exit 1
+
+      - name: Generate deterministic smoke image
+        shell: bash
+        run: |
+          python - <<'PY'
+          import binascii
+          import struct
+          import zlib
+
+          width = height = 256
+          rgb = bytes((128, 96, 160))
+          raw = b"".join(b"\x00" + rgb * width for _ in range(height))
+
+          def chunk(tag: bytes, data: bytes) -> bytes:
+              crc = binascii.crc32(tag + data) & 0xFFFFFFFF
+              return struct.pack("!I", len(data)) + tag + data + struct.pack("!I", crc)
+
+          png = b"\x89PNG\r\n\x1a\n"
+          png += chunk(b"IHDR", struct.pack("!2I5B", width, height, 8, 2, 0, 0, 0))
+          png += chunk(b"IDAT", zlib.compress(raw))
+          png += chunk(b"IEND", b"")
+
+          with open("/tmp/predict-smoke.png", "wb") as fh:
+              fh.write(png)
+          PY
+
+      - name: Smoke check predict endpoint
+        shell: bash
+        run: |
+          curl -fsS -X POST "${{ steps.live.outputs.base_url }}/predict?top_k=3" \
+            -F "file=@/tmp/predict-smoke.png;type=image/png" \
+            -o /tmp/predict.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path("/tmp/predict.json").read_text())
+          assert isinstance(payload["label"], str) and payload["label"], payload
+          assert isinstance(payload["score"], (int, float)), payload
+          assert isinstance(payload["inference_ms"], (int, float)), payload
+          assert payload["model_version"] == "${{ steps.manifest.outputs.model_version }}", payload
+          assert isinstance(payload["top_k"], list) and len(payload["top_k"]) == 3, payload
+          print(payload)
+          PY
+
+      - name: Publish deploy summary
+        if: always()
+        shell: bash
+        run: |
+          {
+            echo "## Deploy Summary"
+            echo
+            echo "- Model version: \`${{ steps.manifest.outputs.model_version }}\`"
+            echo "- Release asset: \`${{ steps.manifest.outputs.asset_name }}\`"
+            echo "- Release tag: \`${{ steps.manifest.outputs.release_tag }}\`"
+            echo "- Image URI: \`${{ steps.image.outputs.image_uri }}\`"
+            echo "- Latest revision: \`${{ steps.deploy.outputs.latest_revision }}\`"
+            echo "- Live URL: [${{ steps.live.outputs.base_url }}](${{ steps.live.outputs.base_url }})"
+          } >> "${GITHUB_STEP_SUMMARY}"

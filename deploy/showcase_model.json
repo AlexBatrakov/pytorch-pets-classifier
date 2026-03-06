@@ -1,0 +1,16 @@
+{
+  "model_version": "exp17_cosine_es_img256_wd1e3_s42",
+  "run_id": "exp17_cosine_es_img256_wd1e3_s42",
+  "release_tag": "v1.1.0",
+  "asset_name": "showcase-model-exp17_cosine_es_img256_wd1e3_s42-best.pt",
+  "download_url": "https://github.com/AlexBatrakov/pytorch-pets-classifier/releases/download/v1.1.0/showcase-model-exp17_cosine_es_img256_wd1e3_s42-best.pt",
+  "sha256": "b15e2370ef4c09d3a4d1c16e50e08227692bbb479797c30caca6829e2f751d3e",
+  "size_bytes": 44855627,
+  "checkpoint_git_commit": "e046c878da314be4aa07ca45ea74fe349054b73b",
+  "class_count": 37,
+  "image_size": 256,
+  "eval_resize_size": 292,
+  "local_source_path": "runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/best.pt",
+  "container_model_path": "/app/models/exp17_best.pt",
+  "notes": "Pinned serving checkpoint for the release-oriented CD workflow. This artifact is attached to the v1.1.0 GitHub Release and should be treated as the source of truth for automated delivery."
+}
