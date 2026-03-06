@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pytorch-pets-classifier"
+version = "0.1.0"
+description = "Portfolio pet project for Oxford-IIIT Pets fine-grained image classification with PyTorch."
+readme = "README.md"
+requires-python = ">=3.13"
+license = { text = "MIT" }
+
+[tool.setuptools]
+packages = ["src"]
