@@ -1,6 +1,11 @@
-torch
-torchvision
+fastapi
+numpy
+pillow
+torch==2.10.0
+torchvision==0.25.0
 tqdm
 scikit-learn
 matplotlib
 pyyaml
+python-multipart
+uvicorn

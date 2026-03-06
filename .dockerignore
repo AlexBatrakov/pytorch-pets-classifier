@@ -1,0 +1,12 @@
+*
+!Dockerfile
+!.dockerignore
+!requirements.txt
+!requirements-dev.txt
+!pyproject.toml
+!src/
+!src/**
+!runs/
+!runs/exp17_cosine_es_img256_wd1e3_s42/
+!runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/
+!runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/best.pt
