@@ -1,5 +1,6 @@
 # PyTorch Pets Classifier
 [![CI](https://github.com/AlexBatrakov/pytorch-pets-classifier/actions/workflows/ci.yml/badge.svg)](https://github.com/AlexBatrakov/pytorch-pets-classifier/actions/workflows/ci.yml)
+[![Deploy](https://github.com/AlexBatrakov/pytorch-pets-classifier/actions/workflows/deploy.yml/badge.svg)](https://github.com/AlexBatrakov/pytorch-pets-classifier/actions/workflows/deploy.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Python 3.13](https://img.shields.io/badge/Python-3.13-3776AB?logo=python&logoColor=white)](https://www.python.org/)
 [![PyTorch](https://img.shields.io/badge/PyTorch-EE4C2C?logo=pytorch&logoColor=white)](https://pytorch.org/)
@@ -13,7 +14,8 @@ The goal of this repo is not only to train a model, but to demonstrate an eviden
 - robust model selection (seed sweeps, not only single-seed peaks),
 - structured error analysis with plots, visual examples, and hypotheses,
 - tests + CI for core pipeline behavior,
-- a minimal model-serving path from checkpoint to public cloud endpoint.
+- a minimal model-serving path from checkpoint to public cloud endpoint,
+- a release-oriented GitHub Actions delivery workflow to Azure.
 
 ## At A Glance (For Recruiters / Reviewers)
 
@@ -22,6 +24,7 @@ What this project demonstrates:
 - **Evidence-based iteration**: error analysis -> hypothesis -> screening -> robustness follow-up
 - **Reproducibility + engineering hygiene**: isolated runs, experiment docs, tests + CI
 - **ML delivery basics**: shared inference core -> FastAPI -> Docker -> Azure Container Apps
+- **Release-oriented CD**: GitHub Actions -> ACR -> Azure Container Apps with post-deploy smoke checks
 - **Honest reporting**: documented negative results (for example rejected `ColorJitter` recipe), not only wins
 
 Fastest way to review the project (2-3 minutes):
@@ -48,7 +51,42 @@ Live demo:
 
 Important scope note:
 - this is a **minimal deployment showcase**, not a full MLOps platform
-- there is no training orchestration, model registry, auth layer, or CI/CD deployment pipeline in this phase
+- there is no training orchestration, model registry, or auth layer in this phase
+
+## CI And Release-Oriented Delivery
+
+This repo now has both:
+
+- `CI`: automated test workflow in `.github/workflows/ci.yml`
+- `CD`: release-oriented deploy workflow in `.github/workflows/deploy.yml`
+
+Current delivery shape:
+
+- trigger policy:
+  - manual `workflow_dispatch`
+- GitHub environment:
+  - `production`
+- Azure auth:
+  - OIDC via `azure/login`
+- serving artifact source:
+  - pinned GitHub Release asset from `v1.1.0`
+- deploy target:
+  - existing Azure Container App
+
+What the deploy workflow does:
+
+- reads `deploy/showcase_model.json`
+- downloads the pinned showcase checkpoint
+- verifies checksum
+- builds a Linux Docker image
+- pushes the image to ACR
+- updates Azure Container Apps
+- runs post-deploy `/health` and `/predict` smoke checks
+
+Important scope note:
+
+- this is **Continuous Delivery**, not auto-deploy on every push
+- it is a small release-oriented delivery path, not a full CI/CD platform
 
 ## Results Snapshot
 
@@ -545,5 +583,6 @@ Dockerfile            containerized inference service
 ### Deployment / Interop
 
 - HTTP inference service + Docker + Azure Container Apps (completed)
+- Release-oriented GitHub Actions CD to ACR / Azure Container Apps (completed)
 - MLflow / W&B thin tracking layer
 - ONNX export
