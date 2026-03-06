@@ -161,6 +161,13 @@ Development dependencies (tests):
 pip install -r requirements-dev.txt
 ```
 
+Optional convenience layer:
+
+```bash
+make help
+make doctor
+```
+
 Optional API env vars:
 
 ```bash
@@ -207,6 +214,16 @@ python -m src.eval --ckpt path/to/checkpoint.pt --split test --cm-out assets/con
 python -m src.predict --ckpt path/to/checkpoint.pt --image path/to/image.jpg
 ```
 
+Makefile shortcut:
+
+```bash
+make predict
+```
+
+Notes:
+- if `IMAGE_PATH` is not set, `make predict` auto-creates a small deterministic smoke-test image
+- if you want a real file instead, use `make predict IMAGE_PATH=path/to/image.jpg`
+
 ### Local HTTP API
 
 The local API expects a checkpoint on disk. For the showcase path, either:
@@ -221,6 +238,15 @@ export MODEL_VERSION=exp17_cosine_es_img256_wd1e3_s42
 export DEVICE=cpu
 python -m src.api
 ```
+
+Makefile shortcut:
+
+```bash
+make serve
+```
+
+Note:
+- `make serve` runs the API in the foreground, so use a second terminal for `make health-local` or `make predict-local`
 
 Health check:
 
@@ -372,6 +398,13 @@ Prediction:
 ```bash
 curl -X POST "https://petsdsdemo-api.salmondune-59471bd6.germanywestcentral.azurecontainerapps.io/predict?top_k=3" \
   -F "file=@path/to/image.jpg"
+```
+
+Makefile shortcuts:
+
+```bash
+make live-health
+make live-predict
 ```
 
 ### Latency Notes (CPU)
