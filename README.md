@@ -10,7 +10,8 @@ The goal of this repo is not only to train a model, but to demonstrate an eviden
 - experiment design, tracking, and comparison,
 - robust model selection (seed sweeps, not only single-seed peaks),
 - structured error analysis with plots, visual examples, and hypotheses,
-- tests + CI for core pipeline behavior.
+- tests + CI for core pipeline behavior,
+- a minimal model-serving path from checkpoint to public cloud endpoint.
 
 ## At A Glance (For Recruiters / Reviewers)
 
@@ -18,6 +19,7 @@ What this project demonstrates:
 - **Applied ML experimentation discipline**: controlled ablations, seed sweeps, explicit model-selection rules
 - **Evidence-based iteration**: error analysis -> hypothesis -> screening -> robustness follow-up
 - **Reproducibility + engineering hygiene**: isolated runs, experiment docs, tests + CI
+- **ML delivery basics**: shared inference core -> FastAPI -> Docker -> Azure Container Apps
 - **Honest reporting**: documented negative results (for example rejected `ColorJitter` recipe), not only wins
 
 Fastest way to review the project (2-3 minutes):
@@ -26,6 +28,25 @@ Fastest way to review the project (2-3 minutes):
 - [3-seed robustness summary for current showcase recipe](docs/experiments/seed_sweep_img256_wd1e3.md)
 - [Error analysis for current showcase model (`exp17`)](docs/experiments/error_analysis_exp17.md)
 - [Group A-short improvement cycle summary](docs/experiments/group_a_short_resolution_wd_aug.md)
+- [Cloud-minimum deployment notes](#cloud-minimum-deployment)
+
+## Cloud-Minimum Deployment
+
+This repo now includes a minimal deployment path for the showcase model:
+
+- shared inference core in `src/inference.py`
+- HTTP API in `src/api.py`
+- Docker image for local reproducibility
+- public deployment in Azure Container Apps
+
+Live demo:
+- API URL: `https://petsdsdemo-api.salmondune-59471bd6.germanywestcentral.azurecontainerapps.io`
+- `GET /health`
+- `POST /predict`
+
+Important scope note:
+- this is a **minimal deployment showcase**, not a full MLOps platform
+- there is no training orchestration, model registry, auth layer, or CI/CD deployment pipeline in this phase
 
 ## Results Snapshot
 
@@ -110,6 +131,9 @@ Historical reference:
 
 Priority sequence after the current showcase update:
 
+- **MLflow or W&B as a thin tracking layer**  
+  Add industry-familiar experiment logging on top of the existing YAML/config/artifact workflow without rewriting the training pipeline.
+
 - **Calibration / uncertainty analysis (Group C)**  
   Add a reliability diagram + temperature scaling for `exp17` to strengthen the trustworthiness story.
 
@@ -123,6 +147,8 @@ Priority sequence after the current showcase update:
 
 ### Setup
 
+Repo runtime baseline: **Python 3.13**
+
 ```bash
 python -m venv .venv
 source .venv/bin/activate
@@ -134,6 +160,21 @@ Development dependencies (tests):
 ```bash
 pip install -r requirements-dev.txt
 ```
+
+Optional API env vars:
+
+```bash
+set -a
+source .env.example
+set +a
+```
+
+### Checkpoint conventions
+
+- `./checkpoints/best.pt` is only a local convenience path.
+- The current **showcase source-of-truth** checkpoint is `runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/best.pt`.
+- Training artifacts are not committed to git, so a fresh clone will not contain the showcase weights until you reproduce the run locally.
+- The public Azure demo is the fastest way to review the deployed model without reproducing training first.
 
 ### Train (baseline)
 
@@ -150,20 +191,230 @@ python -m src.train --config configs/cosine_earlystop.yaml
 ### Evaluate
 
 ```bash
-python -m src.eval --ckpt checkpoints/best.pt --split val
-python -m src.eval --ckpt checkpoints/best.pt --split test
+python -m src.eval --ckpt path/to/checkpoint.pt --split val
+python -m src.eval --ckpt path/to/checkpoint.pt --split test
 ```
 
 Save confusion matrix:
 
 ```bash
-python -m src.eval --ckpt checkpoints/best.pt --split test --cm-out assets/confusion_matrix.png --cm-normalize
+python -m src.eval --ckpt path/to/checkpoint.pt --split test --cm-out assets/confusion_matrix.png --cm-normalize
 ```
 
 ### Predict one image
 
 ```bash
-python -m src.predict --ckpt checkpoints/best.pt --image path/to/image.jpg
+python -m src.predict --ckpt path/to/checkpoint.pt --image path/to/image.jpg
+```
+
+### Local HTTP API
+
+The local API expects a checkpoint on disk. For the showcase path, either:
+- reproduce `exp17` first (see below), or
+- point `MODEL_PATH` at another compatible checkpoint
+
+Run the service:
+
+```bash
+export MODEL_PATH=runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/best.pt
+export MODEL_VERSION=exp17_cosine_es_img256_wd1e3_s42
+export DEVICE=cpu
+python -m src.api
+```
+
+Health check:
+
+```bash
+curl http://127.0.0.1:8080/health
+```
+
+Prediction request:
+
+```bash
+curl -X POST "http://127.0.0.1:8080/predict?top_k=3" \
+  -F "file=@path/to/image.jpg"
+```
+
+Response shape:
+
+```json
+{
+  "label": "Boxer",
+  "score": 0.1328,
+  "top_k": [
+    {"label": "Boxer", "score": 0.1328},
+    {"label": "Abyssinian", "score": 0.0638},
+    {"label": "Bengal", "score": 0.0545}
+  ],
+  "inference_ms": 63.7,
+  "model_version": "exp17_cosine_es_img256_wd1e3_s42"
+}
+```
+
+### Docker
+
+The demo Docker image bakes in the showcase checkpoint from:
+- `runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/best.pt`
+
+That means a fresh clone needs the showcase artifact present locally before `docker build`.
+
+Build and run locally:
+
+```bash
+docker build -t pytorch-pets-api:local .
+docker run --rm -p 8080:8080 pytorch-pets-api:local
+```
+
+Check endpoints:
+
+```bash
+curl http://127.0.0.1:8080/health
+curl -X POST "http://127.0.0.1:8080/predict?top_k=3" \
+  -F "file=@path/to/image.jpg"
+```
+
+Apple Silicon note:
+- local `docker build` is fine for local testing
+- for Azure Container Apps, build the image as `linux/amd64`
+
+### Azure Container Apps
+
+Public deployment used:
+- Azure Container Registry (ACR)
+- Azure Container Apps (ACA)
+- region: `germanywestcentral`
+
+Why this path:
+- it keeps the cloud scope minimal
+- ACA supports external HTTP ingress and scale-to-zero style behavior
+- Azure for Students subscription policies can restrict available regions, so pick an allowed region for your subscription
+
+Working deployment flow:
+
+```bash
+export AZ_REGION=germanywestcentral
+export AZ_RG=rg-petsdemo
+export AZ_LOGS=log-petsdemo
+export AZ_ENV=petsdemo-env
+export AZ_ACR=<globally-unique-acr-name>
+export AZ_APP=petsdemo-api
+
+az login
+az extension add --name containerapp --upgrade
+az group create --name "$AZ_RG" --location "$AZ_REGION"
+az monitor log-analytics workspace create \
+  --resource-group "$AZ_RG" \
+  --workspace-name "$AZ_LOGS" \
+  --location "$AZ_REGION"
+
+export AZ_LOGS_ID=$(az monitor log-analytics workspace show \
+  --resource-group "$AZ_RG" \
+  --workspace-name "$AZ_LOGS" \
+  --query customerId -o tsv)
+export AZ_LOGS_KEY=$(az monitor log-analytics workspace get-shared-keys \
+  --resource-group "$AZ_RG" \
+  --workspace-name "$AZ_LOGS" \
+  --query primarySharedKey -o tsv)
+
+az containerapp env create \
+  --name "$AZ_ENV" \
+  --resource-group "$AZ_RG" \
+  --location "$AZ_REGION" \
+  --logs-workspace-id "$AZ_LOGS_ID" \
+  --logs-workspace-key "$AZ_LOGS_KEY"
+
+az acr create --name "$AZ_ACR" --resource-group "$AZ_RG" --sku Basic --admin-enabled true
+az acr login --name "$AZ_ACR"
+
+docker buildx build --platform linux/amd64 \
+  -t "$AZ_ACR.azurecr.io/pytorch-pets-api:exp17-amd64-cpu" \
+  --push .
+
+export AZ_ACR_USERNAME=$(az acr credential show --name "$AZ_ACR" --query username -o tsv)
+export AZ_ACR_PASSWORD=$(az acr credential show --name "$AZ_ACR" --query 'passwords[0].value' -o tsv)
+
+az containerapp create \
+  --name "$AZ_APP" \
+  --resource-group "$AZ_RG" \
+  --environment "$AZ_ENV" \
+  --image "$AZ_ACR.azurecr.io/pytorch-pets-api:exp17-amd64-cpu" \
+  --ingress external \
+  --target-port 8080 \
+  --registry-server "$AZ_ACR.azurecr.io" \
+  --registry-username "$AZ_ACR_USERNAME" \
+  --registry-password "$AZ_ACR_PASSWORD" \
+  --cpu 1.0 \
+  --memory 2Gi \
+  --min-replicas 0 \
+  --max-replicas 1 \
+  --env-vars MODEL_VERSION=exp17_cosine_es_img256_wd1e3_s42 DEVICE=cpu MODEL_PATH=/app/models/exp17_best.pt
+```
+
+Get the public URL:
+
+```bash
+az containerapp show \
+  --name "$AZ_APP" \
+  --resource-group "$AZ_RG" \
+  --query properties.configuration.ingress.fqdn -o tsv
+```
+
+### Public Demo Smoke Test
+
+Health:
+
+```bash
+curl https://petsdsdemo-api.salmondune-59471bd6.germanywestcentral.azurecontainerapps.io/health
+```
+
+Prediction:
+
+```bash
+curl -X POST "https://petsdsdemo-api.salmondune-59471bd6.germanywestcentral.azurecontainerapps.io/predict?top_k=3" \
+  -F "file=@path/to/image.jpg"
+```
+
+### Latency Notes (CPU)
+
+What is measured by `inference_ms`:
+- model forward pass only
+- batch size `1`
+- no network time
+- no cold-start time
+- no image upload time
+
+How I checked it:
+- force `DEVICE=cpu`
+- ignore the first few warm-up calls
+- send repeated single-image requests
+- compare the API-reported `inference_ms`, not wall-clock `curl` time
+
+Illustrative reference numbers from this repo:
+- local CPU smoke check on my machine (20 repeated runs, warm-up excluded): median `13.85 ms`, mean `14.53 ms`
+- Azure Container Apps smoke checks on the deployed CPU instance: about `64-70 ms` reported by the API
+
+Interpretation:
+- use these only as rough portfolio/demo references
+- Azure cold starts can dominate user-perceived latency when the app scales to zero
+
+### Cost Control
+
+Current low-cost choices used in the demo:
+- ACA `Consumption` workload profile
+- `min-replicas=0`
+- `max-replicas=1`
+- single CPU-only container
+- ACR `Basic`
+
+Practical tips:
+- keep the app at `min-replicas=0` unless you explicitly need always-on response times
+- avoid repeated image rebuilds/pushes if you are experimenting on student credits
+- delete the whole resource group when you are done with the demo
+
+Full cleanup:
+
+```bash
+az group delete --name "$AZ_RG" --yes --no-wait
 ```
 
 ### Run tests
@@ -190,6 +441,7 @@ Notes:
 - `./scripts/run_experiment.sh` refuses to overwrite an existing run directory by default
 - use `--force` only when intentionally rerunning into the same `run_dir`
 - the script trains, evaluates on `val` and `test`, exports confusion matrix, and builds training curves
+- after this run, the showcase checkpoint path is `runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/best.pt`
 
 Related docs:
 - Showcase experiment page: [docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
@@ -215,13 +467,15 @@ Supporting runs:
 ## Project Structure
 
 ```text
-src/                  training/eval/inference/error-analysis scripts
+src/                  training/eval/inference/API/error-analysis scripts
 tests/                unit/integration/smoke tests
 configs/              default and preset configs
 configs/experiments/  experiment-specific configs (exp01, exp02, ...)
 scripts/              experiment runner + seed sweep summary
 docs/experiments/     experiment logs, comparisons, error analysis
 assets/               showcase images used in root README
+Dockerfile            containerized inference service
+.env.example          example API runtime configuration
 ```
 
 ## Implementation Notes
@@ -236,6 +490,7 @@ assets/               showcase images used in root README
 - Dataset downloads to `./data` (not committed)
 - Checkpoints saved to `./checkpoints` or `./runs/.../checkpoints` (not committed)
 - Experiment metrics/plots saved under `./runs/...` (not committed)
+- For showcase inference/demo work, prefer the run-specific `exp17` checkpoint path instead of assuming root `./checkpoints/best.pt`
 
 ## Roadmap
 
@@ -254,4 +509,6 @@ assets/               showcase images used in root README
 
 ### Deployment / Interop
 
+- HTTP inference service + Docker + Azure Container Apps (completed)
+- MLflow / W&B thin tracking layer
 - ONNX export
