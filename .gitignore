@@ -231,3 +231,6 @@ checkpoints/
 *.pyc
 .ipynb_checkpoints/
 .DS_Store
+
+# Internal
+.project_local/

@@ -32,6 +32,7 @@ Fastest way to review the project (2-3 minutes):
 - [Current showcase experiment (`exp17`)](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
 - [3-seed robustness summary for current showcase recipe](docs/experiments/seed_sweep_img256_wd1e3.md)
 - [Error analysis for current showcase model (`exp17`)](docs/experiments/error_analysis_exp17.md)
+- [Project roadmap + next milestones](ROADMAP.md)
 - [Group A-short improvement cycle summary](docs/experiments/group_a_short_resolution_wd_aug.md)
 - [Cloud-minimum deployment notes](#cloud-minimum-deployment)
 
@@ -176,6 +177,9 @@ Priority sequence after the current showcase update:
 
 - **Calibration / uncertainty analysis (Group C)**  
   Add a reliability diagram + temperature scaling for `exp17` to strengthen the trustworthiness story.
+
+- **Interpretability mini-study (`Grad-CAM`)**  
+  Add a small visual analysis on hard confusion pairs to show what the model attends to on correct vs incorrect predictions.
 
 - **Short error-delta write-up (`exp17` vs `exp02`)**  
   Summarize where the new recipe improved (and regressed) by class/confusion pair.
