@@ -32,6 +32,7 @@ python -m src.train --config "${CONFIG_PATH}"
 python -m src.eval --ckpt "${CKPT_PATH}" --split val --json-out "${RUN_DIR}/artifacts/val_metrics.json"
 python -m src.eval --ckpt "${CKPT_PATH}" --split test --json-out "${RUN_DIR}/artifacts/test_metrics.json" --cm-out "${ASSETS_DIR}/confusion_matrix.png" --cm-normalize
 python -m src.plot_metrics --metrics "${METRICS_PATH}" --out "${ASSETS_DIR}/training_curves.png"
+python -m src.log_run_artifacts --run-dir "${RUN_DIR}"
 
 echo "Done. Run artifacts:"
 echo "  checkpoint: ${CKPT_PATH}"

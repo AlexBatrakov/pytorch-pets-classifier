@@ -18,6 +18,17 @@ from tqdm import tqdm
 from .config import apply_overrides, load_config
 from .data import build_loaders
 from .model import build_model
+from .tracking import (
+	RUN_INFO_FILENAME,
+	build_path_tags,
+	create_tracker,
+	flatten_mapping,
+	infer_run_name,
+	normalize_paths,
+	resolve_tracking_settings,
+	to_repo_relative_path,
+	write_run_info,
+)
 from .utils import AverageMeter, accuracy_topk, get_device, set_seed
 
 
@@ -130,6 +141,23 @@ def _append_metrics_csv(
 				f"{lr:.8f}",
 			]
 		)
+
+
+def _build_tracking_context(
+	config_path: str,
+	checkpoints_dir: str,
+	artifacts_dir: str,
+) -> tuple[str, str, dict[str, str], dict[str, str], dict[str, str]]:
+	tracked_paths = {
+		"metrics_csv": os.path.join(artifacts_dir, "metrics.csv"),
+		"best_checkpoint": os.path.join(checkpoints_dir, "best.pt"),
+		"last_checkpoint": os.path.join(checkpoints_dir, "last.pt"),
+	}
+	run_name = infer_run_name(config_path=config_path, checkpoints_dir=checkpoints_dir)
+	run_info_path = os.path.join(artifacts_dir, RUN_INFO_FILENAME)
+	normalized_paths = normalize_paths(tracked_paths)
+	path_tags = build_path_tags(tracked_paths)
+	return run_name, run_info_path, tracked_paths, normalized_paths, path_tags
 
 
 def _set_backbone_trainable(model: nn.Module, trainable: bool) -> None:
@@ -278,10 +306,17 @@ def main() -> None:
 	optimizer, scheduler = _build_optimizer_and_scheduler(model, train_cfg)
 
 	best_val_acc = 0.0
-	best_path = os.path.join(cfg["paths"]["checkpoints_dir"], "best.pt")
-	last_path = os.path.join(cfg["paths"]["checkpoints_dir"], "last.pt")
-	metrics_path = os.path.join(cfg["paths"].get("artifacts_dir", "./artifacts"), "metrics.csv")
-	os.makedirs(cfg["paths"]["checkpoints_dir"], exist_ok=True)
+	checkpoints_dir = cfg["paths"]["checkpoints_dir"]
+	artifacts_dir = cfg["paths"].get("artifacts_dir", "./artifacts")
+	run_name, run_info_path, tracked_paths, normalized_paths, path_tags = _build_tracking_context(
+		config_path=args.config,
+		checkpoints_dir=checkpoints_dir,
+		artifacts_dir=artifacts_dir,
+	)
+	best_path = tracked_paths["best_checkpoint"]
+	last_path = tracked_paths["last_checkpoint"]
+	metrics_path = tracked_paths["metrics_csv"]
+	os.makedirs(checkpoints_dir, exist_ok=True)
 	_init_metrics_csv(metrics_path)
 
 	total_params, trainable_params = _count_parameters(model)
@@ -306,53 +341,90 @@ def main() -> None:
 		},
 	}
 
-	epochs = int(train_cfg.get("epochs", 1))
-	for epoch in range(epochs):
-		if freeze_epochs > 0 and epoch == freeze_epochs:
-			_set_backbone_trainable(model, True)
-			optimizer, scheduler = _build_optimizer_and_scheduler(model, train_cfg)
+	tracking_settings = resolve_tracking_settings()
+	tracker = create_tracker(tracking_settings)
+	run_metadata_for_tags = dict(run_metadata)
+	run_metadata_for_tags["config_path"] = to_repo_relative_path(args.config)
+	run_metadata_for_tags["metrics_csv"] = normalized_paths["metrics_csv"]
+	run_failed = False
 
-		train_loss, train_acc1, train_acc5 = _train_one_epoch(
-			model, train_loader, criterion, optimizer, device
-		)
-		val_loss, val_acc1, val_acc5 = _eval_one_epoch(
-			model, val_loader, criterion, device
-		)
+	try:
+		if tracking_settings.enabled:
+			tracker.start_run(run_name=run_name)
+			tracker.log_params(flatten_mapping(cfg))
+			tracker.set_tags(flatten_mapping(run_metadata_for_tags, prefix="run"))
+			tracker.set_tags(path_tags)
+			write_run_info(
+				run_info_path,
+				{
+					"run_id": tracker.run_id,
+					"tracking_uri": tracking_settings.tracking_uri,
+					"experiment_name": tracking_settings.experiment_name,
+					"run_name": run_name,
+					"paths": normalized_paths,
+				},
+			)
+			print(f"MLflow run started: {tracker.run_id}")
 
-		# Log LR actually used during this epoch. Scheduler updates LR for the next epoch.
-		current_lr = optimizer.param_groups[0]["lr"]
-		epoch_metrics = {
-			"train_loss": train_loss,
-			"train_acc1": train_acc1,
-			"train_acc5": train_acc5,
-			"val_loss": val_loss,
-			"val_acc1": val_acc1,
-			"val_acc5": val_acc5,
-			"lr": current_lr,
-		}
+		epochs = int(train_cfg.get("epochs", 1))
+		for epoch in range(epochs):
+			if freeze_epochs > 0 and epoch == freeze_epochs:
+				_set_backbone_trainable(model, True)
+				optimizer, scheduler = _build_optimizer_and_scheduler(model, train_cfg)
 
-		_append_metrics_csv(
-			path=metrics_path,
-			epoch=epoch + 1,
-			train_loss=train_loss,
-			train_acc1=train_acc1,
-			train_acc5=train_acc5,
-			val_loss=val_loss,
-			val_acc1=val_acc1,
-			val_acc5=val_acc5,
-			lr=current_lr,
-		)
+			train_loss, train_acc1, train_acc5 = _train_one_epoch(
+				model, train_loader, criterion, optimizer, device
+			)
+			val_loss, val_acc1, val_acc5 = _eval_one_epoch(
+				model, val_loader, criterion, device
+			)
 
-		if scheduler is not None:
-			if isinstance(scheduler, ReduceLROnPlateau):
-				sched_monitor = str(train_cfg.get("scheduler", {}).get("monitor", "val_loss"))
-				scheduler.step(_get_metric_value(epoch_metrics, sched_monitor))
-			else:
-				scheduler.step()
+			# Log LR actually used during this epoch. Scheduler updates LR for the next epoch.
+			current_lr = optimizer.param_groups[0]["lr"]
+			epoch_metrics = {
+				"train_loss": train_loss,
+				"train_acc1": train_acc1,
+				"train_acc5": train_acc5,
+				"val_loss": val_loss,
+				"val_acc1": val_acc1,
+				"val_acc5": val_acc5,
+				"lr": current_lr,
+			}
 
-		best_val_acc, is_best = _update_best_val_acc(best_val_acc, val_acc1)
-		if is_best:
-			best_payload = _build_checkpoint_payload(
+			_append_metrics_csv(
+				path=metrics_path,
+				epoch=epoch + 1,
+				train_loss=train_loss,
+				train_acc1=train_acc1,
+				train_acc5=train_acc5,
+				val_loss=val_loss,
+				val_acc1=val_acc1,
+				val_acc5=val_acc5,
+				lr=current_lr,
+			)
+			tracker.log_metrics(epoch_metrics, step=epoch + 1)
+
+			if scheduler is not None:
+				if isinstance(scheduler, ReduceLROnPlateau):
+					sched_monitor = str(train_cfg.get("scheduler", {}).get("monitor", "val_loss"))
+					scheduler.step(_get_metric_value(epoch_metrics, sched_monitor))
+				else:
+					scheduler.step()
+
+			best_val_acc, is_best = _update_best_val_acc(best_val_acc, val_acc1)
+			if is_best:
+				best_payload = _build_checkpoint_payload(
+					model=model,
+					class_names=class_names,
+					cfg=cfg,
+					epoch=epoch + 1,
+					best_val_acc=best_val_acc,
+					epoch_metrics=epoch_metrics,
+					run_metadata=run_metadata,
+				)
+				torch.save(best_payload, best_path)
+
+			last_payload = _build_checkpoint_payload(
 				model=model,
 				class_names=class_names,
 				cfg=cfg,
@@ -361,38 +433,32 @@ def main() -> None:
 				epoch_metrics=epoch_metrics,
 				run_metadata=run_metadata,
 			)
-			torch.save(best_payload, best_path)
+			torch.save(last_payload, last_path)
 
-		last_payload = _build_checkpoint_payload(
-			model=model,
-			class_names=class_names,
-			cfg=cfg,
-			epoch=epoch + 1,
-			best_val_acc=best_val_acc,
-			epoch_metrics=epoch_metrics,
-			run_metadata=run_metadata,
-		)
-		torch.save(last_payload, last_path)
+			print(
+				f"Epoch {epoch + 1}/{epochs} | "
+				f"train loss {train_loss:.4f} acc@1 {train_acc1:.3f} acc@5 {train_acc5:.3f} | "
+				f"val loss {val_loss:.4f} acc@1 {val_acc1:.3f} acc@5 {val_acc5:.3f}"
+			)
 
-		print(
-			f"Epoch {epoch + 1}/{epochs} | "
-			f"train loss {train_loss:.4f} acc@1 {train_acc1:.3f} acc@5 {train_acc5:.3f} | "
-			f"val loss {val_loss:.4f} acc@1 {val_acc1:.3f} acc@5 {val_acc5:.3f}"
-		)
-
-		if es_enabled:
-			current_es_metric = _get_metric_value(epoch_metrics, es_monitor)
-			if _is_metric_improved(current_es_metric, best_es_metric, es_mode, es_min_delta):
-				best_es_metric = current_es_metric
-				epochs_without_improve = 0
-			else:
-				epochs_without_improve += 1
-				if epochs_without_improve >= es_patience:
-					print(
-						"Early stopping triggered: "
-						f"no improvement in {es_monitor} for {es_patience} epochs."
-					)
-					break
+			if es_enabled:
+				current_es_metric = _get_metric_value(epoch_metrics, es_monitor)
+				if _is_metric_improved(current_es_metric, best_es_metric, es_mode, es_min_delta):
+					best_es_metric = current_es_metric
+					epochs_without_improve = 0
+				else:
+					epochs_without_improve += 1
+					if epochs_without_improve >= es_patience:
+						print(
+							"Early stopping triggered: "
+							f"no improvement in {es_monitor} for {es_patience} epochs."
+						)
+						break
+	except Exception:
+		run_failed = True
+		raise
+	finally:
+		tracker.end_run(status="FAILED" if run_failed else "FINISHED")
 
 	print(f"Best checkpoint saved to: {best_path}")
 	print(f"Best val acc: {best_val_acc:.4f}")

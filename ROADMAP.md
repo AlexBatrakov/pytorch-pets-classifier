@@ -10,7 +10,7 @@ Last updated: 2026-03-23
 
 - Current promoted recipe: `exp17_cosine_es_img256_wd1e3_s42`
 - Selection rule: prefer robustness (`mean +/- std` across seeds), not only the best single run
-- Current delivery shape: local training/eval/inference, FastAPI service, Docker image, Azure Container Apps deployment, CI, and release-oriented CD
+- Current delivery shape: local training/eval/inference, local MLflow tracking, FastAPI service, Docker image, Azure Container Apps deployment, CI, and release-oriented CD
 - Main evidence trail:
   - `README.md`
   - `docs/experiments/README.md`
@@ -33,30 +33,13 @@ Last updated: 2026-03-23
 - [x] Add release-oriented Continuous Delivery via GitHub Actions, using a pinned release artifact manifest and post-deploy smoke checks
 - [x] Add Makefile shortcuts for setup, testing, training, evaluation, prediction, serving, Docker, and live endpoint smoke checks
 - [x] Add automated tests and GitHub Actions CI for core training, transforms, inference, plotting, error analysis, and API behavior
+- [x] Add optional local MLflow tracking for params, metrics, small artifacts, and run comparison, with SQLite-backed local metadata storage
 
 ## Ranked Next Steps
 
-### 1. MLflow Tracking
+### 1. Calibration And Uncertainty Analysis
 
 Why this is first:
-- strongest resume keyword-to-effort ratio
-- adds an industry-familiar experiment tracking layer on top of the repo's already solid custom pipeline
-- makes runs, params, metrics, and artifacts easier to review visually
-- `W&B` is also a valid alternative, but `MLflow` is the preferred first fit for this repo's local-first workflow
-
-Portfolio payoff:
-- stronger DS credibility
-- easier to reference in resume bullets and LinkedIn
-- better screenshots / demo material for interviews
-
-Likely deliverables:
-- log config params, seed, git commit, epoch metrics, final metrics, and artifact paths
-- attach `metrics.csv`, plots, evaluation JSON, and best checkpoint as MLflow artifacts
-- document local tracking usage in `README.md`
-
-### 2. Calibration And Uncertainty Analysis
-
-Why this is second:
 - upgrades the project from "good accuracy" to "trustworthy predictions"
 - fits the current error pattern, where many mistakes are near-miss ranking failures rather than total feature failure
 
@@ -70,9 +53,9 @@ Likely deliverables:
 - temperature scaling on validation data
 - a short note on confidence-threshold / abstain-to-review policy
 
-### 3. Cross-Run Experiment Analytics Layer
+### 2. Cross-Run Experiment Analytics Layer
 
-Why this is third:
+Why this is second:
 - best bridge between Data Science and Data Analytics
 - turns the experiment history into an analyzable dataset rather than only a set of markdown pages
 
@@ -85,9 +68,9 @@ Likely deliverables:
 - plots and summary notes on the effect of `scheduler`, `batch_size`, `image_size`, and `weight_decay`
 - a small report answering "what changed, what helped, what did not"
 
-### 4. Error-Delta Report For `exp17` vs `exp02`
+### 3. Error-Delta Report For `exp17` vs `exp02`
 
-Why this is fourth:
+Why this is third:
 - the repo already has strong per-model error analysis
 - a direct before/after comparison would make the improvement story much easier to communicate
 
@@ -101,9 +84,9 @@ Likely deliverables:
 - confidence bucket deltas
 - top-5 recovery deltas
 
-### 5. Interpretability Mini-Study (Grad-CAM)
+### 4. Interpretability Mini-Study (Grad-CAM)
 
-Why this is fifth:
+Why this is fourth:
 - adds explanatory depth without requiring a full new training cycle
 - fits naturally with the repo's existing error-analysis workflow
 - creates strong interview talking points around failure modes and model attention
@@ -118,9 +101,9 @@ Likely deliverables:
 - correct vs incorrect comparison cases
 - a short note on what the model appears to attend to
 
-### 6. One Controlled Backbone Upgrade
+### 5. One Controlled Backbone Upgrade
 
-Why this is sixth:
+Why this is fifth:
 - after recipe tuning on `ResNet18`, the next clean modeling question is whether capacity is now the main bottleneck
 
 Portfolio payoff:
@@ -131,9 +114,9 @@ Likely deliverables:
 - `ResNet18` vs `ResNet34` or `ResNet50` under the same protocol
 - updated comparison table and a short decision note
 
-### 7. Data-Centric Audit For Hard Classes
+### 6. Data-Centric Audit For Hard Classes
 
-Why this is seventh:
+Why this is sixth:
 - hard breed clusters may still hide label noise, ambiguous samples, or near-duplicates
 - this is a good way to deepen the analytical side of the project
 
@@ -146,9 +129,9 @@ Likely deliverables:
 - nearest-neighbor / embedding inspection
 - notes on ambiguous or suspicious examples
 
-### 8. Lightweight Demo / Landing Page
+### 7. Lightweight Demo / Landing Page
 
-Why this is lower priority:
+Why this is seventh:
 - improves polish and reviewability
 - but adds less DS/DA value than the items above
 

@@ -22,7 +22,7 @@ The goal of this repo is not only to train a model, but to demonstrate an eviden
 What this project demonstrates:
 - **Applied ML experimentation discipline**: controlled ablations, seed sweeps, explicit model-selection rules
 - **Evidence-based iteration**: error analysis -> hypothesis -> screening -> robustness follow-up
-- **Reproducibility + engineering hygiene**: isolated runs, experiment docs, tests + CI
+- **Reproducibility + engineering hygiene**: isolated runs, local MLflow tracking, experiment docs, tests + CI
 - **ML delivery basics**: shared inference core -> FastAPI -> Docker -> Azure Container Apps
 - **Release-oriented CD**: GitHub Actions -> ACR -> Azure Container Apps with post-deploy smoke checks
 - **Honest reporting**: documented negative results (for example rejected `ColorJitter` recipe), not only wins
@@ -172,19 +172,19 @@ Historical reference:
 
 Priority sequence after the current showcase update:
 
-- **MLflow or W&B as a thin tracking layer**  
-  Add industry-familiar experiment logging on top of the existing YAML/config/artifact workflow without rewriting the training pipeline.
-
-- **Calibration / uncertainty analysis (Group C)**  
+- **Calibration / uncertainty analysis (Group C)**
   Add a reliability diagram + temperature scaling for `exp17` to strengthen the trustworthiness story.
 
-- **Interpretability mini-study (`Grad-CAM`)**  
+- **Cross-run experiment analytics**
+  Build a compact analytics layer on top of the experiment history and MLflow-tracked runs to summarize what actually moved quality and stability.
+
+- **Interpretability mini-study (`Grad-CAM`)**
   Add a small visual analysis on hard confusion pairs to show what the model attends to on correct vs incorrect predictions.
 
-- **Short error-delta write-up (`exp17` vs `exp02`)**  
+- **Short error-delta write-up (`exp17` vs `exp02`)**
   Summarize where the new recipe improved (and regressed) by class/confusion pair.
 
-- **One controlled backbone upgrade (Group B)**  
+- **One controlled backbone upgrade (Group B)**
   Compare `ResNet18` vs `ResNet34/ResNet50` under the same evaluation protocol and seed-based validation.
 
 ## Quickstart
@@ -204,6 +204,27 @@ Development dependencies (tests):
 ```bash
 pip install -r requirements-dev.txt
 ```
+
+Optional local MLflow tracking (after installing development dependencies):
+
+```bash
+MLFLOW_TRACKING=1 python -m src.train --config configs/default.yaml
+```
+
+For the full train + eval + plots workflow under one MLflow run:
+
+```bash
+MLFLOW_TRACKING=1 ./scripts/run_experiment.sh configs/experiments/exp17_cosine_es_img256_wd1e3_s42.yaml runs/exp17_cosine_es_img256_wd1e3_s42
+```
+
+Notes:
+- MLflow is kept in `requirements-dev.txt` so the inference/runtime path stays lean
+- direct `python -m src.train` logs training params, metadata, and epoch metrics
+- `./scripts/run_experiment.sh` also logs final eval metrics plus existing small artifacts
+- the default local metadata store is `sqlite:///mlflow.db`; override `MLFLOW_TRACKING_URI` only if you want a different store
+- launch the local UI with `mlflow ui --backend-store-uri sqlite:///mlflow.db --port 8080`
+- tracked artifacts remain local on disk and are not committed to git
+- this remains a local tracking layer only; there is no registry or serving integration in this phase
 
 Optional convenience layer:
 
@@ -582,11 +603,10 @@ Dockerfile            containerized inference service
 
 - AMP training
 - Optuna hyperparameter search
-- Weights & Biases logging
+- Cross-run experiment analytics on top of local MLflow tracking
 
 ### Deployment / Interop
 
 - HTTP inference service + Docker + Azure Container Apps (completed)
 - Release-oriented GitHub Actions CD to ACR / Azure Container Apps (completed)
-- MLflow / W&B thin tracking layer
 - ONNX export

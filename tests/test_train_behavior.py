@@ -8,6 +8,7 @@ from torch.optim.lr_scheduler import ReduceLROnPlateau
 
 from src.train import (
 	_append_metrics_csv,
+	_build_tracking_context,
 	_build_optimizer_and_scheduler,
 	_build_checkpoint_payload,
 	_count_parameters,
@@ -144,3 +145,23 @@ def test_build_optimizer_and_scheduler_plateau() -> None:
 	optimizer, scheduler = _build_optimizer_and_scheduler(model, train_cfg)
 	assert optimizer is not None
 	assert isinstance(scheduler, ReduceLROnPlateau)
+
+
+def test_build_tracking_context_uses_run_dir_name_and_repo_relative_paths(tmp_path, monkeypatch) -> None:
+	repo_root = tmp_path
+	run_dir = repo_root / "runs" / "exp17_cosine_es_img256_wd1e3_s42"
+	checkpoints_dir = run_dir / "checkpoints"
+	artifacts_dir = run_dir / "artifacts"
+	monkeypatch.chdir(repo_root)
+
+	run_name, run_info_path, tracked_paths, normalized_paths, path_tags = _build_tracking_context(
+		config_path="configs/experiments/exp17.yaml",
+		checkpoints_dir=str(checkpoints_dir),
+		artifacts_dir=str(artifacts_dir),
+	)
+
+	assert run_name == "exp17_cosine_es_img256_wd1e3_s42"
+	assert run_info_path.endswith("artifacts/mlflow_run.json")
+	assert tracked_paths["metrics_csv"].endswith("artifacts/metrics.csv")
+	assert normalized_paths["best_checkpoint"] == "runs/exp17_cosine_es_img256_wd1e3_s42/checkpoints/best.pt"
+	assert path_tags["path.metrics_csv"] == "runs/exp17_cosine_es_img256_wd1e3_s42/artifacts/metrics.csv"

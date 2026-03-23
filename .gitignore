@@ -220,6 +220,10 @@ __marimo__/
 data/
 artifacts/
 runs/
+mlruns/
+mlflow.db
+mlflow.db-shm
+mlflow.db-wal
 assets/training_curves_*.png
 !assets/training_curves_showcase.png
 checkpoints/
