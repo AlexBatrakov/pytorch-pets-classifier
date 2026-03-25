@@ -10,10 +10,11 @@ Last updated: 2026-03-25
 
 - Current promoted recipe: `exp17_cosine_es_img256_wd1e3_s42`
 - Selection rule: prefer robustness (`mean +/- std` across seeds), not only the best single run
-- Current delivery shape: local training/eval/inference, local MLflow tracking, FastAPI service, Docker image, Azure Container Apps deployment, CI, and release-oriented CD
+- Current delivery shape: local training/eval/inference, cross-run experiment analytics, local MLflow tracking, FastAPI service, Docker image, Azure Container Apps deployment, CI, and release-oriented CD
 - Main evidence trail:
   - `README.md`
   - `docs/experiments/README.md`
+  - `docs/experiments/cross_run_analytics.md`
   - `docs/experiments/error_analysis_exp17.md`
   - `docs/experiments/calibration_exp17.md`
   - `deploy/showcase_model.json`
@@ -36,27 +37,13 @@ Last updated: 2026-03-25
 - [x] Add automated tests and GitHub Actions CI for core training, transforms, inference, plotting, error analysis, and API behavior
 - [x] Add optional local MLflow tracking for params, metrics, small artifacts, and run comparison, with SQLite-backed local metadata storage
 - [x] Add post-hoc calibration analysis for `exp17` with validation-fit temperature scaling, reliability diagrams, and confidence-threshold reporting
+- [x] Add a compact cross-run experiment analytics layer from configs + run artifacts, with a repo-level summary and public synthesis note
 
 ## Ranked Next Steps
 
-### 1. Cross-Run Experiment Analytics Layer
+### 1. Error-Delta Report For `exp17` vs `exp02`
 
 Why this is first:
-- best bridge between Data Science and Data Analytics
-- turns the experiment history into an analyzable dataset rather than only a set of markdown pages
-
-Portfolio payoff:
-- shows analytical reasoning beyond model training
-- creates a clearer story about which factors actually moved quality and stability
-
-Likely deliverables:
-- a consolidated run summary table from configs + metrics
-- plots and summary notes on the effect of `scheduler`, `batch_size`, `image_size`, and `weight_decay`
-- a small report answering "what changed, what helped, what did not"
-
-### 2. Error-Delta Report For `exp17` vs `exp02`
-
-Why this is second:
 - the repo already has strong per-model error analysis
 - a direct before/after comparison would make the improvement story much easier to communicate
 
@@ -70,9 +57,9 @@ Likely deliverables:
 - confidence bucket deltas
 - top-5 recovery deltas
 
-### 3. Interpretability Mini-Study (Grad-CAM)
+### 2. Interpretability Mini-Study (Grad-CAM)
 
-Why this is third:
+Why this is second:
 - adds explanatory depth without requiring a full new training cycle
 - fits naturally with the repo's existing error-analysis workflow
 - creates strong interview talking points around failure modes and model attention
@@ -87,9 +74,9 @@ Likely deliverables:
 - correct vs incorrect comparison cases
 - a short note on what the model appears to attend to
 
-### 4. One Controlled Backbone Upgrade
+### 3. One Controlled Backbone Upgrade
 
-Why this is fourth:
+Why this is third:
 - after recipe tuning on `ResNet18`, the next clean modeling question is whether capacity is now the main bottleneck
 
 Portfolio payoff:
@@ -100,9 +87,9 @@ Likely deliverables:
 - `ResNet18` vs `ResNet34` or `ResNet50` under the same protocol
 - updated comparison table and a short decision note
 
-### 5. Data-Centric Audit For Hard Classes
+### 4. Data-Centric Audit For Hard Classes
 
-Why this is fifth:
+Why this is fourth:
 - hard breed clusters may still hide label noise, ambiguous samples, or near-duplicates
 - this is a good way to deepen the analytical side of the project
 
@@ -115,9 +102,9 @@ Likely deliverables:
 - nearest-neighbor / embedding inspection
 - notes on ambiguous or suspicious examples
 
-### 6. Lightweight Demo / Landing Page
+### 5. Lightweight Demo / Landing Page
 
-Why this is sixth:
+Why this is fifth:
 - improves polish and reviewability
 - but adds less DS/DA value than the items above
 

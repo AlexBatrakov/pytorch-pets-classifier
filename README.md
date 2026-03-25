@@ -29,6 +29,7 @@ What this project demonstrates:
 
 Fastest way to review the project (2-3 minutes):
 - [Experiment index + comparison table](docs/experiments/README.md)
+- [Cross-run experiment analytics summary](docs/experiments/cross_run_analytics.md)
 - [Current showcase experiment (`exp17`)](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
 - [3-seed robustness summary for current showcase recipe](docs/experiments/seed_sweep_img256_wd1e3.md)
 - [Error analysis for current showcase model (`exp17`)](docs/experiments/error_analysis_exp17.md)
@@ -172,10 +173,7 @@ Historical reference:
 
 ## Next Steps (Planned, Optional Reading)
 
-Priority sequence after the current showcase update:
-
-- **Cross-run experiment analytics**
-  Build a compact analytics layer on top of the experiment history and MLflow-tracked runs to summarize what actually moved quality and stability.
+Priority sequence after the current showcase + analytics update:
 
 - **Short error-delta write-up (`exp17` vs `exp02`)**
   Summarize where the new recipe improved (and regressed) by class/confusion pair.
