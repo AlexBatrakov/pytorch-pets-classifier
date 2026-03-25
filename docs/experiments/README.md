@@ -7,6 +7,7 @@ Use this page as the main navigation hub for all experiment-related materials.
 ## Start Here
 
 - [Current showcase experiment (`exp17`: `img256` + `wd=1e-3`)](exp17_cosine_es_img256_wd1e3_s42.md)
+- [Cross-run experiment analytics](cross_run_analytics.md)
 - [Error analysis for current showcase model (`exp17`)](error_analysis_exp17.md)
 - [Calibration analysis for current showcase model (`exp17`)](calibration_exp17.md)
 - [Group A-short summary (resolution / weight decay / augmentation screening)](group_a_short_resolution_wd_aug.md)
