@@ -32,6 +32,7 @@ Fastest way to review the project (2-3 minutes):
 - [Current showcase experiment (`exp17`)](docs/experiments/exp17_cosine_es_img256_wd1e3_s42.md)
 - [3-seed robustness summary for current showcase recipe](docs/experiments/seed_sweep_img256_wd1e3.md)
 - [Error analysis for current showcase model (`exp17`)](docs/experiments/error_analysis_exp17.md)
+- [Calibration analysis for current showcase model (`exp17`)](docs/experiments/calibration_exp17.md)
 - [Project roadmap + next milestones](ROADMAP.md)
 - [Group A-short improvement cycle summary](docs/experiments/group_a_short_resolution_wd_aug.md)
 - [Cloud-minimum deployment notes](#cloud-minimum-deployment)
@@ -156,6 +157,7 @@ Details:
 
 Detailed report:
 - [docs/experiments/error_analysis_exp17.md](docs/experiments/error_analysis_exp17.md)
+- Calibration follow-up: [docs/experiments/calibration_exp17.md](docs/experiments/calibration_exp17.md)
 
 Key findings from the `test` split:
 - Errors are still concentrated in visually similar breeds (`American Pit Bull Terrier`, `Staffordshire Bull Terrier`, `Ragdoll`, `Basset Hound`, `Birman`)
@@ -172,17 +174,14 @@ Historical reference:
 
 Priority sequence after the current showcase update:
 
-- **Calibration / uncertainty analysis (Group C)**
-  Add a reliability diagram + temperature scaling for `exp17` to strengthen the trustworthiness story.
-
 - **Cross-run experiment analytics**
   Build a compact analytics layer on top of the experiment history and MLflow-tracked runs to summarize what actually moved quality and stability.
 
-- **Interpretability mini-study (`Grad-CAM`)**
-  Add a small visual analysis on hard confusion pairs to show what the model attends to on correct vs incorrect predictions.
-
 - **Short error-delta write-up (`exp17` vs `exp02`)**
   Summarize where the new recipe improved (and regressed) by class/confusion pair.
+
+- **Interpretability mini-study (`Grad-CAM`)**
+  Add a small visual analysis on hard confusion pairs to show what the model attends to on correct vs incorrect predictions.
 
 - **One controlled backbone upgrade (Group B)**
   Compare `ResNet18` vs `ResNet34/ResNet50` under the same evaluation protocol and seed-based validation.
@@ -597,7 +596,7 @@ Dockerfile            containerized inference service
 - Grad-CAM visualization
 - Stronger backbone experiments (ResNet34 / EfficientNet)
 - Targeted augmentations for hard breed pairs
-- Confidence calibration (reliability diagram / temperature scaling)
+- Error-delta report (`exp17` vs `exp02`)
 
 ### Training / Experimentation
 

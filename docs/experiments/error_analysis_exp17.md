@@ -150,6 +150,9 @@ Ideas:
 - temperature scaling
 - confidence-based abstention analysis (optional)
 
+Implemented follow-up:
+- `docs/experiments/calibration_exp17.md`
+
 ## Practical conclusion
 - `exp17` improves the previous showcase recipe on both average quality and seed robustness.
 - The error profile still confirms the same core bottleneck: **fine-grained class separation**, especially in a few hard breed clusters.

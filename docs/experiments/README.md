@@ -8,6 +8,7 @@ Use this page as the main navigation hub for all experiment-related materials.
 
 - [Current showcase experiment (`exp17`: `img256` + `wd=1e-3`)](exp17_cosine_es_img256_wd1e3_s42.md)
 - [Error analysis for current showcase model (`exp17`)](error_analysis_exp17.md)
+- [Calibration analysis for current showcase model (`exp17`)](calibration_exp17.md)
 - [Group A-short summary (resolution / weight decay / augmentation screening)](group_a_short_resolution_wd_aug.md)
 - [Seed sweep for current showcase setup (`exp17`, seeds `42/123/777`)](seed_sweep_img256_wd1e3.md)
 - [Error analysis for previous showcase model (`exp02`)](error_analysis_exp02.md)
@@ -81,7 +82,7 @@ Legend:
 | `exp14` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
 | `exp15` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
 | `exp16` | - | Yes | - | Yes | `group_a_short_resolution_wd_aug.md` |
-| `exp17` | Yes | Yes | Yes | Yes | `exp17_cosine_es_img256_wd1e3_s42.md`, `seed_sweep_img256_wd1e3.md`, `error_analysis_exp17.md` |
+| `exp17` | Yes | Yes | Yes | Yes | `exp17_cosine_es_img256_wd1e3_s42.md`, `seed_sweep_img256_wd1e3.md`, `error_analysis_exp17.md`, `calibration_exp17.md` |
 | `exp18` | Yes | Yes | - | Yes | `exp18_cosine_es_img256_wd1e3_cj_s42.md`, `group_a_short_resolution_wd_aug.md` |
 | `exp19` | - | - | Yes | Yes | `seed_sweep_img256_wd1e3.md` |
 | `exp20` | - | - | Yes | Yes | `seed_sweep_img256_wd1e3.md` |

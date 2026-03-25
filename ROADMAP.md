@@ -4,7 +4,7 @@ This file tracks repo-level milestones and next steps for the showcase project.
 
 Detailed experiment evidence lives in `docs/experiments/`. This roadmap is intentionally higher-level: it summarizes what is already shipped in the repo and what is most valuable to build next for a portfolio targeting Data Science / Data Analytics roles, with Software Development as a secondary signal.
 
-Last updated: 2026-03-23
+Last updated: 2026-03-25
 
 ## Current Showcase State
 
@@ -15,6 +15,7 @@ Last updated: 2026-03-23
   - `README.md`
   - `docs/experiments/README.md`
   - `docs/experiments/error_analysis_exp17.md`
+  - `docs/experiments/calibration_exp17.md`
   - `deploy/showcase_model.json`
 
 ## Completed Milestones
@@ -34,28 +35,13 @@ Last updated: 2026-03-23
 - [x] Add Makefile shortcuts for setup, testing, training, evaluation, prediction, serving, Docker, and live endpoint smoke checks
 - [x] Add automated tests and GitHub Actions CI for core training, transforms, inference, plotting, error analysis, and API behavior
 - [x] Add optional local MLflow tracking for params, metrics, small artifacts, and run comparison, with SQLite-backed local metadata storage
+- [x] Add post-hoc calibration analysis for `exp17` with validation-fit temperature scaling, reliability diagrams, and confidence-threshold reporting
 
 ## Ranked Next Steps
 
-### 1. Calibration And Uncertainty Analysis
+### 1. Cross-Run Experiment Analytics Layer
 
 Why this is first:
-- upgrades the project from "good accuracy" to "trustworthy predictions"
-- fits the current error pattern, where many mistakes are near-miss ranking failures rather than total feature failure
-
-Portfolio payoff:
-- strong DS maturity signal
-- creates a more thoughtful story around confidence, reliability, and decision quality
-
-Likely deliverables:
-- reliability diagram
-- Expected Calibration Error (ECE)
-- temperature scaling on validation data
-- a short note on confidence-threshold / abstain-to-review policy
-
-### 2. Cross-Run Experiment Analytics Layer
-
-Why this is second:
 - best bridge between Data Science and Data Analytics
 - turns the experiment history into an analyzable dataset rather than only a set of markdown pages
 
@@ -68,9 +54,9 @@ Likely deliverables:
 - plots and summary notes on the effect of `scheduler`, `batch_size`, `image_size`, and `weight_decay`
 - a small report answering "what changed, what helped, what did not"
 
-### 3. Error-Delta Report For `exp17` vs `exp02`
+### 2. Error-Delta Report For `exp17` vs `exp02`
 
-Why this is third:
+Why this is second:
 - the repo already has strong per-model error analysis
 - a direct before/after comparison would make the improvement story much easier to communicate
 
@@ -84,9 +70,9 @@ Likely deliverables:
 - confidence bucket deltas
 - top-5 recovery deltas
 
-### 4. Interpretability Mini-Study (Grad-CAM)
+### 3. Interpretability Mini-Study (Grad-CAM)
 
-Why this is fourth:
+Why this is third:
 - adds explanatory depth without requiring a full new training cycle
 - fits naturally with the repo's existing error-analysis workflow
 - creates strong interview talking points around failure modes and model attention
@@ -101,9 +87,9 @@ Likely deliverables:
 - correct vs incorrect comparison cases
 - a short note on what the model appears to attend to
 
-### 5. One Controlled Backbone Upgrade
+### 4. One Controlled Backbone Upgrade
 
-Why this is fifth:
+Why this is fourth:
 - after recipe tuning on `ResNet18`, the next clean modeling question is whether capacity is now the main bottleneck
 
 Portfolio payoff:
@@ -114,9 +100,9 @@ Likely deliverables:
 - `ResNet18` vs `ResNet34` or `ResNet50` under the same protocol
 - updated comparison table and a short decision note
 
-### 6. Data-Centric Audit For Hard Classes
+### 5. Data-Centric Audit For Hard Classes
 
-Why this is sixth:
+Why this is fifth:
 - hard breed clusters may still hide label noise, ambiguous samples, or near-duplicates
 - this is a good way to deepen the analytical side of the project
 
@@ -129,9 +115,9 @@ Likely deliverables:
 - nearest-neighbor / embedding inspection
 - notes on ambiguous or suspicious examples
 
-### 7. Lightweight Demo / Landing Page
+### 6. Lightweight Demo / Landing Page
 
-Why this is seventh:
+Why this is sixth:
 - improves polish and reviewability
 - but adds less DS/DA value than the items above
 
